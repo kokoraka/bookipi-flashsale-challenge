@@ -8,5 +8,9 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    coverage: {
+      provider: 'v8', // or 'istanbul'
+      reporter: ['text', 'lcov'], // 'lcov' creates coverage/lcov.info
+    },
   },
 });

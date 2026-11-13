@@ -1,3 +1,6 @@
+-include .env
+export
+
 default: help
 
 .PHONY: help
@@ -8,10 +11,6 @@ help:
 .PHONY: install
 install:
 	npm i -g @nestjs/cli
-
-.PHONY: test-coverage
-test-coverage: 
-	npm run test:cov
 
 .PHONY: start-dev
 start-dev: 
@@ -24,3 +23,20 @@ generate:
 .PHONY: generate-proto
 generate-proto: 
 	npm run generate:proto
+
+.PHONY: test-watch
+test-watch: 
+	npm run test:watch
+
+.PHONY: test-coverage
+test-coverage: 
+	npm run test:cov
+
+.PHONY: test-analyze
+test-analyze:
+	make test-coverage
+	make analyze-sonar
+
+.PHONY: analyze-sonar
+analyze-sonar:
+	npm run analyze:sonar
