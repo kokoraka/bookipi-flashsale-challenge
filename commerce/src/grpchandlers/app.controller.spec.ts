@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller.js';
@@ -9,23 +10,25 @@ import {
 
 describe('AppController', () => {
   let controller: AppController;
-  let appService: AppService;
+
+  const appServiceMock = {
+    getInfo: vi.fn<() => string>(),
+  };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
         {
           provide: AppService,
-          useValue: {
-            getInfo: vi.fn(),
-          },
+          useValue: appServiceMock,
         },
       ],
     }).compile();
 
     controller = module.get<AppController>(AppController);
-    appService = module.get<AppService>(AppService);
   });
 
   describe('getInfo', () => {
@@ -36,7 +39,7 @@ describe('AppController', () => {
     });
 
     it('should return successful response', () => {
-      vi.spyOn(appService, 'getInfo').mockReturnValue('Commerce Service');
+      appServiceMock.getInfo.mockReturnValue('Commerce Service');
 
       const expected: GetInfoResponse = {
         status: {
@@ -48,11 +51,11 @@ describe('AppController', () => {
       const result = controller.getInfo(request);
 
       expect(result).toEqual(expected);
-      expect(appService.getInfo).toHaveBeenCalledTimes(1);
+      expect(appServiceMock.getInfo).toHaveBeenCalledTimes(1);
     });
 
     it('should return the message provided by AppService', () => {
-      vi.spyOn(appService, 'getInfo').mockReturnValue('Another Service');
+      appServiceMock.getInfo.mockReturnValue('Another Service');
 
       const result = controller.getInfo(request);
 

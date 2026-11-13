@@ -12,11 +12,12 @@ import { AppService } from './../services/app.service.js';
 export class AppController implements AppServiceController {
   constructor(private readonly appService: AppService) { }
 
-  getInfo(request: GetInfoRequest): GetInfoResponse {
+  getInfo(_request: GetInfoRequest): GetInfoResponse {
+    const message = this.appService.getInfo()
     return {
       status: {
         code: "SUCCESS",
-        message: this.appService.getInfo(),
+        message,
       }
     };
   }
