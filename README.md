@@ -58,3 +58,13 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 4. Multiple currency support and currency management
 - We'll assume all the currency represented in Australian Dollar (simplification purposes)
 - Currency data will be mocked instead of using real database table
+
+## Technologies
+
+### Environments
+- NodeJS = v24.22.3
+- NPM = 11.19.1
+
+### Internal Service
+- NestJS = ease the service scafolding / boilerplate
+- GRPC = reduce communication latency
