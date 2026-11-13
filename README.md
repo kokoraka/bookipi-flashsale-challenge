@@ -2,13 +2,27 @@
 
 Flash sales ordering platform submission for Bookipi job application by: Raka Suryaardi Widjaja
 
+## System Design
+
+### Architecture
+
+![Architecture](./docs/assets/architecture-1.png)
+
+### User Interface
+
+![User Interface](./docs/assets/user-interface-1.png)
+
+### Entity Relationship Diagram
+
+![Entity Relationship Diagram](./docs/assets/entity-relationship-diagram-1.png)
+
 ## Requirements
 
 ### Functional Requirements
 1. List on-sales products
 - There's only 1 product (simplification purposes)
 
-2. Authentication mechanism
+2. User identification mechanism
 - Enter user identification, e.g: username or email (simplification purposes)
 
 3. Create order
@@ -31,25 +45,16 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 - Prevent over-selling and race conditions from happening when purchasing products
 
 ### Out-of Scoped Requirements
-1. Authentication
-No need to implement full authentication (simplification purposes)
+1. Authentication and user management
+- No need to implement full authentication (simplification purposes)
 
 2. Product management
-Each product has different available stock, but no need to implement the product management
+- Each product has different available stock, but no need to implement the product management
 
 3. Promotion management
-For this purposes we'd assume there will be only 1 flash sale promotion period, we won't implement the promotion management
+- For this purposes we'd assume there will be only 1 flash sale promotion period, we won't implement the promotion management
+- Promotion data will be mocked instead of using real database tables
 
-## Design
-
-### Architecture
-
-TBA
-
-### UI
-
-TBA
-
-### ERD
-
-TBA
+4. Multiple currency support and currency management
+- We'll assume all the currency represented in Australian Dollar (simplification purposes)
+- Currency data will be mocked instead of using real database table
