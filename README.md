@@ -6,15 +6,15 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 
 ### Architecture
 
-![Architecture](/bookipi-flashsale-challenge/docs/assets/architecture-1.png)
+![Architecture](./docs/assets/architecture-1.png)
 
 ### User Interface
 
-![User Interface](/bookipi-flashsale-challenge/docs/assets/user-interface-1.png)
+![User Interface](./docs/assets/user-interface-1.png)
 
 ### Entity Relationship Diagram
 
-![Entity Relationship Diagram](/bookipi-flashsale-challenge/docs/assets/entity-relationship-diagram-1.png)
+![Entity Relationship Diagram](./docs/assets/entity-relationship-diagram-1.png)
 
 ## Requirements
 
