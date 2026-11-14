@@ -1,0 +1,59 @@
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  scenarios: {
+    smoke: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10s', target: 3 },
+      ],
+    },
+    load: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '5m', target: 100 }, // traffic ramp-up from 1 to 100 users over 5 minutes.
+        { duration: '30m', target: 100 }, // stay at 100 users for 30 minutes
+        { duration: '5m', target: 0 }, // ramp-down to 0 users
+      ],
+    },
+    stress: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10m', target: 200 }, // traffic ramp-up from 1 to a higher 200 users over 10 minutes.
+        { duration: '30m', target: 200 }, // stay at higher 200 users for 30 minutes
+        { duration: '5m', target: 0 }, // ramp-down to 0 users
+      ],
+    },
+    spike: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 2000 }, // fast ramp-up to a high point
+        { duration: '1m', target: 0 }, // quick ramp-down to 0 users
+      ],
+    }
+  },
+  thresholds: {
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(95)<300'],
+  },
+};
+
+function testGetProductById() {
+  const host = 'http://localhost:4001';
+  const productId = '930ea41d-93e4-4fff-83f7-78681ad4';
+  const res = http.get(`${host}/v1/flashsale/products/${productId}`);
+
+  check(res, {
+    'status code 200': (r) => r.status == 200,
+  });
+  sleep(1);
+}
+
+export default function () {
+  testGetProductById();
+}
