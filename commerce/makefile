@@ -16,14 +16,6 @@ install:
 start-dev: 
 	npm run start:dev
 
-.PHONY: generate
-generate: 
-	make generate-openapi
-
-.PHONY: generate-openapi
-generate-openapi: 
-# 	TODO: add openapi
-
 .PHONY: test-watch
 test-watch: 
 	npm run test:watch
