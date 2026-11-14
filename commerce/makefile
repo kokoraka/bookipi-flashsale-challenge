@@ -45,3 +45,20 @@ monitor-process-window-background:
 # window script
 	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-service.ps1' -WindowStyle Minimized"
 	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-database.ps1' -WindowStyle Minimized"
+
+.PHONY: infra-install
+infra-install:
+	make infra-start
+	./development/mysql/replication.sh
+
+.PHONY: infra-start
+infra-start:
+	docker compose up -d
+
+.PHONY: infra-stop
+infra-stop:
+	docker compose down
+
+.PHONY: infra-restart
+infra-restart:
+	docker compose restart

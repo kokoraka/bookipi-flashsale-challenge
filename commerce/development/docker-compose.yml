@@ -1,0 +1,120 @@
+name: bookipi-commerce
+version: '3'
+services:
+  mysql-db-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+      args:
+        MYSQL_CONFIG: h1.conf.cnf
+    container_name: mysql-db-1
+    restart: unless-stopped
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=bookipi_commerce
+      - MYSQL_ROOT_PASSWORD=toor
+    volumes:
+      - mysql-db-1-data:/var/lib/mysql
+    ports:
+      - 3311:3306
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.11
+  mysql-db-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+      args:
+        MYSQL_CONFIG: h2.conf.cnf
+    container_name: mysql-db-2
+    restart: unless-stopped
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=bookipi_commerce
+      - MYSQL_ROOT_PASSWORD=toor
+    depends_on:
+      - mysql-db-1
+    volumes:
+      - mysql-db-2-data:/var/lib/mysql
+    ports:
+      - 3312:3306
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.12
+  mysql-db-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+      args:
+        MYSQL_CONFIG: h3.conf.cnf
+    container_name: mysql-db-3
+    restart: unless-stopped
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=bookipi_commerce
+      - MYSQL_ROOT_PASSWORD=toor
+    depends_on:
+      - mysql-db-2
+    volumes:
+      - mysql-db-3-data:/var/lib/mysql
+    ports:
+      - 3313:3306
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.13
+  mysql-db-test:
+    image: "mysql:8.3.0"
+    container_name: mysql-db-test
+    restart: unless-stopped
+    environment:
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=bookipi_commerce_test
+      - MYSQL_ROOT_PASSWORD=toor
+    ports:
+      - 3307:3306
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.99
+  phpmyadmin:
+    image: "phpmyadmin:5.2"
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - 8031:80
+    environment:
+      - PMA_HOSTS=mysql-db-1,mysql-db-2,mysql-db-3,mysql-db-test
+    depends_on:
+      - mysql-db-1
+      - mysql-db-2
+      - mysql-db-3
+      - mysql-db-test
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.101
+  proxy:
+    image: "haproxy:2.6"
+    container_name: proxy
+    restart: always
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - 8020:80 # stats
+      - 3300:3300 # mysql master
+      - 3301:3301 # mysql replica
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.102
+volumes:
+  mysql-db-1-data:
+  mysql-db-2-data:
+  mysql-db-3-data:
+networks:
+  mysql-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
