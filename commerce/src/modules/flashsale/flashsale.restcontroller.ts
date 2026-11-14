@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { FlashSaleFeature } from './flashsale.feature.js';
-import { GetFlashsaleProductByIdResponse } from './../../restgen/models/GetFlashsaleProductByIdResponse.js'
+import { GetFlashsaleProductByIdResponse } from '../../restgen/models/GetFlashsaleProductByIdResponse.js'
 
 @Controller()
 export class FlashSaleController {
