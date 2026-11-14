@@ -4,7 +4,12 @@ value:
     message: success get product
   data:
     product:
-      unique_id: d8c8f1c1-d224-488b-85d6-3d50cd4986e3
+      unique_id: 930ea41d-93e4-4fff-83f7-78681ad4
       name: "Product 1"
+      description: "Description of Product 1"
+      thumbnail:
+        provider: "local"
+        file:
+          public_url: "https://learn.kotoenglish.com/wp-content/uploads/2025/05/Banana-Definition.webp"
       created_at: 1776482979237
       updated_at: 1776482979237

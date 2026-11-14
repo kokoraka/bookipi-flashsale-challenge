@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductRepository } from './product.repository.js'
-import { REPOSITORY_PRODUCT_TOKEN } from './../token.js'
+import { REPOSITORY_PRODUCT_TOKEN } from './../repository.js'
 
 @Module({
+  imports: [
+    TypeOrmModule.forFeature([], 'primary'),
+  ],
   providers: [
     ProductRepository,
     {
