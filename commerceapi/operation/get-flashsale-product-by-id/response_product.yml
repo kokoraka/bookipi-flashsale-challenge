@@ -2,13 +2,20 @@ type: object
 required:
   - unique_id
   - name
-  - description
+  - selling_price
   - created_at
 properties:
   unique_id:
     type: string
   name:
     type: string
+  description:
+    type: string
+  thumbnail:
+    $ref: "./../../main.yml#/components/schemas/FileObject"
+  selling_price:
+    type: string
+    description: decimal
   created_at:
     type: integer
     format: int64
