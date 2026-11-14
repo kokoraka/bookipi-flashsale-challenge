@@ -123,6 +123,7 @@ describe("Status", () => {
     })
 
     it("returns status parsed from json blob", async () => {
+      // Arrange
       const payload = {
         status: {
           code: "VALIDATION.INVALID_PARAM",
@@ -138,18 +139,22 @@ describe("Status", () => {
         },
       }
 
+      const textMock = vi.fn().mockResolvedValue(
+        JSON.stringify(payload),
+      )
+
       const blob = {
         type: "application/json",
-        text: vi.fn().mockResolvedValue(
-          JSON.stringify(payload),
-        ),
+        text: textMock,
       } as unknown as Blob
 
       const spy = vi.spyOn(Status, "fromObject")
 
+      // Act
       await Status.fromBlob(blob)
 
-      expect(blob.text).toHaveBeenCalled()
+      // Assert
+      expect(textMock).toHaveBeenCalledTimes(1)
       expect(spy).toHaveBeenCalledWith(payload)
 
       spy.mockRestore()

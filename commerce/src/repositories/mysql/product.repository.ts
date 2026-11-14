@@ -9,9 +9,8 @@ import { StatusCode } from './../../entities/status/StatusCode.js';
 
 export class ProductRepository implements ProductRepositoryInterface {
 
-  async getProduct(p: GetProductParam): Promise<GetProductResult> {
+  async getProduct(_p: GetProductParam): Promise<GetProductResult> {
     try {
-
       return {
         status: new Status(
           StatusCode.SUCCESS,
