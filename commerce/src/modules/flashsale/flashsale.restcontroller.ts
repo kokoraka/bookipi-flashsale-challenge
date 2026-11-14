@@ -13,16 +13,14 @@ export class FlashSaleController {
     @Param('id') id: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetFlashsaleProductByIdResponse> {
-    let httpCode = HttpStatus.INTERNAL_SERVER_ERROR
-
     const getRes = await this.flashSaleFeature.getProduct({
       unique_id: id,
     })
     if (!getRes.status.valid() || !getRes.product) {
+      let httpCode = HttpStatus.INTERNAL_SERVER_ERROR
       if (getRes.status.is(StatusCode.RESOURCE_NOT_FOUND)) {
         httpCode = HttpStatus.NOT_FOUND
       }
-
       res.status(httpCode)
       return {
         status: {
@@ -32,8 +30,7 @@ export class FlashSaleController {
       }
     }
 
-    httpCode = HttpStatus.OK
-    res.status(httpCode)
+    res.status(HttpStatus.OK)
     return {
       status: {
         code: getRes.status.code,
@@ -41,13 +38,13 @@ export class FlashSaleController {
       },
       data: {
         product: {
-          unique_id: getRes.product?.unique_id,
-          name: getRes.product?.name,
-          description: getRes.product?.description,
-          selling_price: getRes.product?.selling_price.toString(),
-          thumbnail: getRes.product?.thumbnail,
-          created_at: getRes.product?.created_at.getTime(),
-          updated_at: getRes.product?.updated_at?.getTime(),
+          unique_id: getRes.product.unique_id,
+          name: getRes.product.name,
+          description: getRes.product.description,
+          selling_price: getRes.product.selling_price.toString(),
+          thumbnail: getRes.product.thumbnail,
+          created_at: getRes.product.created_at.getTime(),
+          updated_at: getRes.product.updated_at?.getTime(),
         }
       }
     }
