@@ -1,11 +1,41 @@
+import { join } from 'node:path';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController as RestAppController } from './app.restcontroller.js';
+import { ProductRepositoryModule } from './../../repositories/mysql/index.js'
 import { FlashSaleModule } from '../flashsale/flashsale.module.js'
 import { AppService } from '../../services/app.service.js';
 
 @Module({
-  imports: [FlashSaleModule],
+  imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      name: 'primary',
+      useFactory: async (configService: ConfigService) => ({
+        name: 'primary',
+        type: 'mysql',
+        host: configService.get('REPOSITORY_MYSQL_PRIMARY_HOST'),
+        port: configService.get<number>('REPOSITORY_MYSQL_PRIMARY_PORT'),
+        username: configService.get('REPOSITORY_MYSQL_PRIMARY_USERNAME'),
+        password: configService.get('REPOSITORY_MYSQL_PRIMARY_PASSWORD'),
+        database: configService.get('REPOSITORY_MYSQL_PRIMARY_DB_NAME'),
+        entities: [join(import.meta.dirname, "./../../models/*.model{.js,.ts}")],
+        synchronize: false,
+        logging: true,
+        logger: 'simple-console',
+        migrationsRun: true,
+        migrations: [join(import.meta.dirname, "./../../migrations/**/*{.js,.ts}")],
+      }),
+      inject: [ConfigService],
+    }),
+    ProductRepositoryModule,
+    FlashSaleModule
+  ],
   controllers: [RestAppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

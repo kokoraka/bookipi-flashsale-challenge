@@ -10,11 +10,18 @@
  * Do not edit the class manually.
  */
 
+import { FileObject } from '../models/FileObject.js';
 import { HttpFile } from '../http/http.js';
 
 export class GetFlashsaleProductByIdProduct {
     'unique_id': string;
     'name': string;
+    'description'?: string;
+    'thumbnail'?: FileObject;
+    /**
+    * decimal
+    */
+    'selling_price': string;
     'created_at': number;
     'updated_at'?: number;
 
@@ -32,6 +39,24 @@ export class GetFlashsaleProductByIdProduct {
         {
             "name": "name",
             "baseName": "name",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string",
+            "format": ""
+        },
+        {
+            "name": "thumbnail",
+            "baseName": "thumbnail",
+            "type": "FileObject",
+            "format": ""
+        },
+        {
+            "name": "selling_price",
+            "baseName": "selling_price",
             "type": "string",
             "format": ""
         },

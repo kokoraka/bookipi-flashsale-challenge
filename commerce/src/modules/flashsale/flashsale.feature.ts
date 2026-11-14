@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Status } from '../../entities/status/index.js'
 import type { ProductRepositoryInterface } from '../../repositories/repository.js'
-import { REPOSITORY_PRODUCT_TOKEN } from '../../repositories/token.js'
+import { REPOSITORY_PRODUCT_TOKEN } from '../../repositories/repository.js'
 import { FileObject } from './../file/file.js'
 
 export interface FlashSaleFeatureInterface {
@@ -22,7 +22,7 @@ export type GetProductItem = {
   name: string
   description?: string
   thumbnail?: FileObject
-  selling_price?: number
+  selling_price: number
   created_at: Date
   updated_at?: Date
 }

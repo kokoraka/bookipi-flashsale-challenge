@@ -4,30 +4,54 @@ import {
   GetProductParam,
   GetProductResult,
 } from '../repository.js';
+import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { Product } from './../../models/product.model.js';
 import { Status } from './../../entities/status/Status.js';
 import { StatusCode } from './../../entities/status/StatusCode.js';
 
+@Injectable()
 export class ProductRepository implements ProductRepositoryInterface {
 
-  async getProduct(_p: GetProductParam): Promise<GetProductResult> {
+  constructor(
+    @InjectDataSource('primary')
+    private readonly primarySource: DataSource
+  ) { }
+
+  async getProduct(p: GetProductParam): Promise<GetProductResult> {
     try {
+      const product = await this.primarySource.getRepository(Product)
+        .createQueryBuilder('products')
+        .select([
+          'products.unique_id',
+          'products.name',
+          'products.description',
+          'products.selling_price',
+          'products.thumbnail',
+          'products.created_at',
+          'products.updated_at',
+        ])
+        .where('unique_id = :unique_id', {
+          unique_id: p.unique_id
+        })
+        .getOne();
+      if (!product) {
+        return {
+          status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'product not found'),
+        };
+      }
+
       return {
-        status: new Status(
-          StatusCode.SUCCESS,
-          'Product retrieved successfully',
-        ),
+        status: new Status(StatusCode.SUCCESS, 'success get product'),
         product: {
-          unique_id: "930ea41d-93e4-4fff-83f7-78681ad49dbe",
-          name: "Product 1",
-          description: "Description of Product 1",
-          selling_price: 499.99,
-          thumbnail: {
-            provider: "",
-            file: {
-              public_url: "https://learn.kotoenglish.com/wp-content/uploads/2025/05/Banana-Definition.webp",
-            }
-          },
-          created_at: new Date(1794531600000),
+          unique_id: product.unique_id,
+          name: product.name,
+          description: product.description,
+          selling_price: product.selling_price,
+          thumbnail: product.thumbnail,
+          created_at: product.created_at,
+          updated_at: product.updated_at,
         }
       };
     } catch (e: unknown) {
