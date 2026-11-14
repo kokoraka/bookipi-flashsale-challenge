@@ -11,6 +11,8 @@ help:
 .PHONY: install
 install:
 	npm i -g @nestjs/cli
+# window script
+	choco install k6
 
 .PHONY: start-dev
 start-dev: 
@@ -24,6 +26,11 @@ test-watch:
 test-coverage: 
 	npm run test:cov
 
+.PHONY: test-performance
+test-performance: 
+	make monitor-process-window-background
+	k6 run --scenario spike test/product.performance-spec.ts
+
 .PHONY: test-analyze
 test-analyze:
 	make test-coverage
@@ -32,3 +39,12 @@ test-analyze:
 .PHONY: analyze-sonar
 analyze-sonar:
 	npm run analyze:sonar
+
+.PHONY: monitor-process-window-background
+monitor-process-window-background: 
+# window script
+	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor.ps1' -WindowStyle Minimized"
+
+.PHONY: monitor-process-window
+monitor-process-window: 
+	@powershell -ExecutionPolicy Bypass -File ./scripts/monitor.ps1

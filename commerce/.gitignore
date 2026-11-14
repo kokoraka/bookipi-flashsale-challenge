@@ -20,6 +20,7 @@ lerna-debug.log*
 
 # Tests
 /coverage
+/performance
 /.nyc_output
 
 # IDEs and editors
@@ -57,3 +58,6 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# monitoring
+/**/*.monitor-result.csv
