@@ -15,13 +15,17 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
+    it('should return app info', () => {
       const getRes = appController.getInfo();
 
       expect(getRes).toEqual({
         status: {
-          code: "SUCCESS",
-          message: "Commerce Service",
+          code: 'SUCCESS',
+          message: 'success get app info',
+        },
+        data: {
+          app_name: 'Commerce Service',
+          app_version: '0.0.1',
         }
       });
     });
