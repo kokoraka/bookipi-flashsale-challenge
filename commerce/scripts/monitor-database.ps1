@@ -1,7 +1,7 @@
-$processName = "node"
+$processName = "mysqld"
 
 $executionTimestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$output = "performance/$executionTimestamp.monitor-result.csv"
+$output = "performance/monitor-database.$executionTimestamp.csv"
 
 "Timestamp,CPU_Percent,Memory_MB" |
     Out-File $output

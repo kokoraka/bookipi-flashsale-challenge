@@ -43,8 +43,5 @@ analyze-sonar:
 .PHONY: monitor-process-window-background
 monitor-process-window-background: 
 # window script
-	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor.ps1' -WindowStyle Minimized"
-
-.PHONY: monitor-process-window
-monitor-process-window: 
-	@powershell -ExecutionPolicy Bypass -File ./scripts/monitor.ps1
+	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-service.ps1' -WindowStyle Minimized"
+	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-database.ps1' -WindowStyle Minimized"

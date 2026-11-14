@@ -17,15 +17,15 @@ Testing held by running the performance test script, the result is collected thr
 
 1. Spike Testing 2m Spike up-to 2K VU, down to 0 in 1m
 
-| attempt | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | 0% | 41.34ms | 1.07s | 242.6ms | 961.36 | 11.86% | 74.88MB |
-| 2 | 0% | 17.27ms | 142.74ms | 88.2ms | 984.48 | 30.88% | 73.11MB |
-| 3 | 0% | 62.68ms | 1.01s | 360.28ms | 942.18 | 48.55% | 93.04MB |
-| 4 | 0% | 33.51ms | 762.43ms | 195.36ms | 967.90 | 66.61% | 76.37MB |
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | ok | 0% | 41.34ms | 1.07s | 242.6ms | 961.36 | 11.86% | 74.88MB |
+| 2 | ok | 0% | 17.27ms | 142.74ms | 88.2ms | 984.48 | 30.88% | 73.11MB |
+| 3 | not ok | 0% | 62.68ms | 1.01s | 360.28ms | 942.18 | 48.55% | 93.04MB |
+| 4 | ok | 0% | 33.51ms | 762.43ms | 195.36ms | 967.90 | 66.61% | 76.37MB |
 
 2. Stress Testing 2m30s Load up-to 5K VU, down to 0 in 20s
 
-| attempt | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | 0% | 1.05s | 3.28s | 1.79s | 1550.95 | 15.12% | 201.26MB |
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage | avg db ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | not ok | 0% | 1.17s | 4s | 2.2s | 1470.99 | 15.75% | 202.92MB | 21.17MB | 
