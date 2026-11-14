@@ -16,14 +16,6 @@ install:
 start-dev: 
 	npm run start:dev
 
-.PHONY: generate
-generate: 
-	make generate-proto
-
-.PHONY: generate-proto
-generate-proto: 
-	npm run generate:proto
-
 .PHONY: test-watch
 test-watch: 
 	npm run test:watch

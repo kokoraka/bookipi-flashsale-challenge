@@ -65,6 +65,8 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 - NodeJS = v24.22.3
 - NPM = 11.19.1
 
-### Internal Service
+### Commerce (Gateway)
 - NestJS = ease the service scafolding / boilerplate
-- GRPC = reduce communication latency
+- REST = client transport layer with server
+- OpenAPI = generate client, server and documentation
+

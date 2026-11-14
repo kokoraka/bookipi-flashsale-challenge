@@ -1,0 +1,4 @@
+value:
+  status:
+    code: SYSTEM.INTERNAL_ERROR
+    message: unable to proceed the request

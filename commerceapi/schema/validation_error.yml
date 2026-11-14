@@ -1,0 +1,19 @@
+type: object
+required:
+  - code
+  - message
+  - params
+properties:
+  code:
+    type: string
+    example: VALIDATION.REQUIRED
+  message:
+    type: string
+    example: Customer Name is a required field
+  params:
+    type: object
+    description: optional params data if any
+    additionalProperties:
+      type: array
+      items:
+        type: string

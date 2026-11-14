@@ -1,0 +1,4 @@
+value:
+  status:
+    code: VALIDATION.INVALID_INPUT
+    message: Invalid input data

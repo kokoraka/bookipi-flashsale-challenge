@@ -1,0 +1,14 @@
+description: failed do action
+content:
+  application/json:
+    schema:
+      $ref: "./../schema/response_info.yml"
+    examples:
+      "Unknown Error":
+        $ref: "./example_unknown_error.yml"
+      "Internal Error":
+        $ref: "./example_internal_error.yml"
+      "Communication Failure":
+        $ref: "./example_communication_failure.yml"
+      "Communication Timeout":
+        $ref: "./example_communication_timeout.yml"

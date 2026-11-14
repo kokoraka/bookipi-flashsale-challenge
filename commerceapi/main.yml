@@ -1,0 +1,76 @@
+openapi: "3.0.0"
+info:
+  title: Bookipi Commerce Specification
+  version: 0.0.1-$REVISION
+  description: Bookipi Commerce
+  contact:
+    name: Support
+    url: https://github.com/kokoraka
+    email: raka.suryaardi@gmail.com
+servers:
+  - url: http://localhost:4001
+    description: local
+paths:
+  /app/info:
+    $ref: "./path/info.yml"
+  /v1/flashsale/products/{id}:
+    $ref: "./path/flashsale_product_id.yml"
+components:
+  parameters:
+    ObjectId:
+      $ref: "./parameter/object_id.yml"
+    CorrelationId:
+      $ref: "./parameter/correlation_id.yml"
+  schemas:
+    ResponseInfo:
+      $ref: "./schema/response_info.yml"
+    ResponseStatus:
+      $ref: "./schema/response_status.yml"
+    ResponseValidation:
+      $ref: "./schema/response_validation.yml"
+    RequestPagination:
+      $ref: "./schema/request_pagination.yml"
+    ValidationError:
+      $ref: "./schema/validation_error.yml"
+    Sort:
+      $ref: "./schema/sort.yml"
+    Filter:
+      $ref: "./schema/filter.yml"
+    File:
+      $ref: "./schema/file.yml"
+    FileObject:
+      $ref: "./schema/file_object.yml"
+
+    # app
+    GetAppInfoResponse:
+      $ref: "./operation/get-app-info/response_body.yml"
+    GetAppInfoData:
+      $ref: "./operation/get-app-info/response_data.yml"
+
+    # product
+    GetFlashsaleProductByIdResponse:
+      $ref: "./operation/get-flashsale-product-by-id/response_body.yml"
+    GetFlashsaleProductByIdData:
+      $ref: "./operation/get-flashsale-product-by-id/response_data.yml"
+    GetFlashsaleProductByIdProduct:
+      $ref: "./operation/get-flashsale-product-by-id/response_product.yml"
+
+  responses:
+    BadRequest:
+      $ref: "./response/bad_request.yml"
+    UnauthenticatedAccess:
+      $ref: "./response/unauthenticated_access.yml"
+    ForbiddenAccess:
+      $ref: "./response/forbidden_access.yml"
+    NotFound:
+      $ref: "./response/not_found.yml"
+    Conflict:
+      $ref: "./response/conflict.yml"
+    ServerError:
+      $ref: "./response/server_error.yml"
+
+  securitySchemes:
+    bearerAuth:
+      $ref: "./security/bearer.yml"
+    apiKeyAuth:
+      $ref: "./security/api_key.yml"

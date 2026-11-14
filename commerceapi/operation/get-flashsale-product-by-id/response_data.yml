@@ -1,0 +1,6 @@
+type: object
+required:
+  - product
+properties:
+  product:
+    $ref: "./response_product.yml"

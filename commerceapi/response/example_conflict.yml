@@ -1,0 +1,4 @@
+value:
+  status:
+    code: RESOURCE.ALREADY_EXISTS
+    message: resource already exists

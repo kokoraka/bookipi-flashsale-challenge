@@ -1,0 +1,4 @@
+value:
+  status:
+    code: SYSTEM.COMMUNICATION_TIMEOUT
+    message: timeout exceeded

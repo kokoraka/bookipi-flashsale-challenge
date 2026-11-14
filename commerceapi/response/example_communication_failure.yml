@@ -1,0 +1,4 @@
+value:
+  status:
+    code: SYSTEM.COMMUNICATION_FAILURE
+    message: communication failure

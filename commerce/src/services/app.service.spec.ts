@@ -14,4 +14,12 @@ describe('AppService', () => {
       expect(result).toBe('Commerce Service');
     });
   });
+
+  describe('getVersion', () => {
+    it('should return the service version', () => {
+      const result = service.getVersion();
+
+      expect(result).toBe('0.0.1');
+    });
+  });
 });

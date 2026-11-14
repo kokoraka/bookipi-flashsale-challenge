@@ -1,0 +1,4 @@
+value:
+  status:
+    code: VALIDATION.INVALID_STATE
+    message: One or more fields are on invalid state
