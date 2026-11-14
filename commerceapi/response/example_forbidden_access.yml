@@ -1,0 +1,4 @@
+value:
+  status:
+    code: AUTHZ.FORBIDDEN
+    message: forbiden access

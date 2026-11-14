@@ -1,0 +1,14 @@
+type: object
+required:
+  - status
+  - validation_errors
+properties:
+  status:
+    $ref: "./response_status.yml"
+  validation_errors:
+    type: object
+    description: optional validation errors grouped by request field name.
+    additionalProperties:
+      type: array
+      items:
+        $ref: "./validation_error.yml"

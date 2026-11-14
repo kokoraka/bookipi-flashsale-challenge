@@ -1,0 +1,13 @@
+value:
+  status:
+    code: VALIDATION.INVALID_PARAM
+    message: One or more fields are invalid
+  validation_errors:
+    customer_name:
+      - code: VALIDATION.REQUIRED
+        message: Customer Name is a required field
+      - code: VALIDATION.MIN_LENGTH
+        message: Customer Name should be at least 2 characters
+        params:
+          min:
+            - "2"

@@ -1,0 +1,12 @@
+description: invalid parameter
+content:
+  application/json:
+    schema:
+      $ref: "./../schema/response_validation.yml"
+    examples:
+      "Invalid Parameter":
+        $ref: "./example_invalid_param.yml"
+      "Invalid Input":
+        $ref: "./example_invalid_input.yml"
+      "Invalid State":
+        $ref: "./example_invalid_state.yml"

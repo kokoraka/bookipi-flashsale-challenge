@@ -1,0 +1,8 @@
+description: conflict
+content:
+  application/json:
+    schema:
+      $ref: "./../schema/response_info.yml"
+    examples:
+      "Conflict":
+        $ref: "./example_conflict.yml"

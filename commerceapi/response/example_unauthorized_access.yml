@@ -1,0 +1,4 @@
+value:
+  status:
+    code: AUTHN.UNAUTHORIZED
+    message: unauthorized access

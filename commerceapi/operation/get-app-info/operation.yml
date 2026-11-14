@@ -1,0 +1,19 @@
+operationId: GetAppInfo
+summary: get app info
+description: get app info
+tags:
+  - app
+parameters:
+  - $ref: "./../../main.yml#/components/parameters/CorrelationId"
+responses:
+  "200":
+    description: success get app info
+    content:
+      application/json:
+        schema:
+          $ref: "./response_body.yml"
+        examples:
+          "Success":
+            $ref: "./example_success.yml"
+security:
+  - apiKeyAuth: []

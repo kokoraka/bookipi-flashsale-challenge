@@ -1,0 +1,10 @@
+value:
+  status:
+    code: SUCCESS
+    message: success get product
+  data:
+    product:
+      unique_id: d8c8f1c1-d224-488b-85d6-3d50cd4986e3
+      name: "Product 1"
+      created_at: 1776482979237
+      updated_at: 1776482979237

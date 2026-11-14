@@ -1,0 +1,9 @@
+type: object
+required:
+  - provider
+  - file
+properties:
+  provider:
+    type: string
+  file:
+    $ref: "./file.yml"

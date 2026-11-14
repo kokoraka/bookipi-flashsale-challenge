@@ -1,0 +1,4 @@
+value:
+  status:
+    code: RESOURCE.NOT_FOUND
+    message: not found

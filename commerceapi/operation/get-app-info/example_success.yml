@@ -1,0 +1,7 @@
+value:
+  status:
+    code: SUCCESS
+    message: success
+  data:
+    app_name: humbledon
+    app_version: "1.0.0"
