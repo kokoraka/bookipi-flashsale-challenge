@@ -18,11 +18,11 @@ start-dev:
 
 .PHONY: generate
 generate: 
-	make generate-proto
+	make generate-openapi
 
-.PHONY: generate-proto
-generate-proto: 
-	npm run generate:proto
+.PHONY: generate-openapi
+generate-openapi: 
+# 	TODO: add openapi
 
 .PHONY: test-watch
 test-watch: 
