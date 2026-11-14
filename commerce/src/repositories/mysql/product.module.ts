@@ -5,7 +5,7 @@ import { REPOSITORY_PRODUCT_TOKEN } from './../repository.js'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([], 'primary'),
+    TypeOrmModule.forFeature([], 'secondary'),
   ],
   providers: [
     ProductRepository,
