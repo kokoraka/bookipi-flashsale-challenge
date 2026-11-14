@@ -29,7 +29,7 @@ test-coverage:
 .PHONY: test-performance
 test-performance: 
 	make monitor-process-window-background
-	k6 run --scenario spike test/product.performance-spec.ts
+	k6 run --scenario stress test/product.performance-spec.ts
 
 .PHONY: test-analyze
 test-analyze:
