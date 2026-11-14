@@ -15,13 +15,13 @@ import { StatusCode } from './../../entities/status/StatusCode.js';
 export class ProductRepository implements ProductRepositoryInterface {
 
   constructor(
-    @InjectDataSource('primary')
-    private readonly primarySource: DataSource
+    @InjectDataSource('secondary')
+    private readonly secondarySource: DataSource
   ) { }
 
   async getProduct(p: GetProductParam): Promise<GetProductResult> {
     try {
-      const product = await this.primarySource.getRepository(Product)
+      const product = await this.secondarySource.getRepository(Product)
         .createQueryBuilder('products')
         .select([
           'products.unique_id',

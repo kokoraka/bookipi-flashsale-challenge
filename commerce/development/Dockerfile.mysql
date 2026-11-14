@@ -1,0 +1,7 @@
+FROM mysql:8.3.0
+
+ARG MYSQL_CONFIG=h1.conf.cnf
+
+COPY mysql/${MYSQL_CONFIG} /etc/mysql/conf.d/mysql.conf.cnf
+
+RUN chmod 644 /etc/mysql/conf.d/mysql.conf.cnf
