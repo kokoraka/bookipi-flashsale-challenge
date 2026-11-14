@@ -61,12 +61,8 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 
 ## Technologies
 
-### Environments
-- NodeJS = v24.22.3
-- NPM = 11.19.1
-
 ### Commerce (Gateway)
 - NestJS = ease the service scafolding / boilerplate
 - REST = client transport layer with server
 - OpenAPI = generate client, server and documentation
-
+- Grafana k6 = Performance testing tools
