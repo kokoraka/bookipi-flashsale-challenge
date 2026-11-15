@@ -15,6 +15,7 @@ properties:
     $ref: "./../../main.yml#/components/schemas/FileObject"
   selling_price:
     type: string
+    format: decimal
     description: decimal
   created_at:
     type: integer

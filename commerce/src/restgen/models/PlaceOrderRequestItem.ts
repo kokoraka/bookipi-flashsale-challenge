@@ -14,6 +14,9 @@ import { HttpFile } from '../http/http.js';
 
 export class PlaceOrderRequestItem {
     'item_id': string;
+    /**
+    * decimal
+    */
     'quantity': string;
 
     static readonly discriminator: string | undefined = undefined;
@@ -31,7 +34,7 @@ export class PlaceOrderRequestItem {
             "name": "quantity",
             "baseName": "quantity",
             "type": "string",
-            "format": ""
+            "format": "decimal"
         }    ];
 
     static getAttributeTypeMap() {

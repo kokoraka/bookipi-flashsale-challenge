@@ -7,3 +7,5 @@ properties:
     type: string
   quantity:
     type: string
+    format: decimal
+    description: decimal
