@@ -10,7 +10,7 @@ export class Product {
     name: 'id',
     unsigned: true
   })
-  id: number;
+  id: string;
 
   @Column({
     name: 'unique_id',
@@ -56,4 +56,9 @@ export class Product {
     nullable: true,
   })
   updated_at: Date;
+
+  @Column({
+    name: 'available_quantity',
+  })
+  available_quantity: number;
 }
