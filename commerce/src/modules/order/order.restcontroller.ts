@@ -24,8 +24,10 @@ export class OrderController {
     })
     if (!placeRes.status.valid() || !placeRes.order) {
       let httpCode = HttpStatus.INTERNAL_SERVER_ERROR
-      if (placeRes.status.any([StatusCode.VALIDATION_INVALID_PARAM, StatusCode.VALIDATION_INVALID_STATE])) {
+      if (placeRes.status.is(StatusCode.VALIDATION_INVALID_PARAM)) {
         httpCode = HttpStatus.BAD_REQUEST
+      } else if (placeRes.status.is(StatusCode.VALIDATION_INVALID_STATE)) {
+        httpCode = HttpStatus.CONFLICT
       }
       res.status(httpCode)
       return {

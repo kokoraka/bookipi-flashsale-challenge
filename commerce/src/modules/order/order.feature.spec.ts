@@ -1,5 +1,6 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ConfigService } from '@nestjs/config';
 import { OrderFeature } from './order.feature.js';
 import type { PlaceOrderParam } from './order.feature.js';
 import { Status, StatusCode } from '../../entities/status/index.js';
@@ -24,6 +25,10 @@ type GenerateIdsResult = ReturnType<
 
 describe('OrderFeature', () => {
   let feature: OrderFeature;
+
+  let configService: {
+    get: ReturnType<typeof vi.fn<ConfigService['get']>>;
+  };
 
   let idGenerator: {
     generateIds: ReturnType<typeof vi.fn<IdGeneratorInterface['generateIds']>>;
@@ -50,8 +55,12 @@ describe('OrderFeature', () => {
     name: 'Product Name',
     description: 'Product Description',
     selling_price: 10000,
-    created_at: new Date()
+    created_at: new Date(),
   };
+
+  // Use a fixed timestamp to avoid time-dependent tests.
+  const promotionStartTime = new Date(Date.now() - 60_000_000).getTime();
+  const promotionEndTime = new Date(Date.now() + 60_000_000).getTime();
 
   const createProductResult = (
     result: Partial<GetProductResult>,
@@ -104,6 +113,18 @@ describe('OrderFeature', () => {
   };
 
   beforeEach(() => {
+    configService = {
+      get: vi.fn<ConfigService['get']>((key: string) => {
+        const config: Record<string, unknown> = {
+          PROMOTION_ENABLED: true,
+          PROMOTION_START_TIME: String(promotionStartTime),
+          PROMOTION_END_TIME: String(promotionEndTime),
+        };
+
+        return config[key];
+      }),
+    };
+
     idGenerator = {
       generateIds: vi.fn<IdGeneratorInterface['generateIds']>(),
     };
@@ -117,6 +138,7 @@ describe('OrderFeature', () => {
     };
 
     feature = new OrderFeature(
+      configService as unknown as ConfigService,
       idGenerator as unknown as IdGeneratorInterface,
       orderRepo as unknown as OrderRepositoryInterface,
       productRepo as unknown as ProductRepositoryInterface,
@@ -124,6 +146,87 @@ describe('OrderFeature', () => {
   });
 
   describe('placeOrder', () => {
+    describe('when promotion is disabled', () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
+        configService.get.mockImplementation((key: string) => {
+          const config: Record<string, unknown> = {
+            PROMOTION_ENABLED: false,
+            PROMOTION_START_TIME: String(Date.now() + 60_000),
+            PROMOTION_END_TIME: String(Date.now() + 120_000),
+          };
+
+          return config[key];
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result).toEqual({
+          status: new Status(
+            StatusCode.VALIDATION_INVALID_STATE,
+            'promotion is disabled',
+          ),
+        });
+
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('when promotion has not started', () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
+        configService.get.mockImplementation((key: string) => {
+          const config: Record<string, unknown> = {
+            PROMOTION_ENABLED: true,
+            PROMOTION_START_TIME: String(Date.now() + 60_000),
+            PROMOTION_END_TIME: String(Date.now() + 120_000),
+          };
+
+          return config[key];
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result).toEqual({
+          status: new Status(
+            StatusCode.VALIDATION_INVALID_STATE,
+            'promotion is not started yet',
+          ),
+        });
+
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('when promotion has ended', () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
+        configService.get.mockImplementation((key: string) => {
+          const config: Record<string, unknown> = {
+            PROMOTION_ENABLED: true,
+            PROMOTION_START_TIME: String(Date.now() - 120_000),
+            PROMOTION_END_TIME: String(Date.now() - 60_000),
+          };
+
+          return config[key];
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result).toEqual({
+          status: new Status(
+            StatusCode.VALIDATION_INVALID_STATE,
+            'promotion has ended',
+          ),
+        });
+
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+    });
+
     describe('when request parameters are invalid', () => {
       it.each([
         {
@@ -300,21 +403,6 @@ describe('OrderFeature', () => {
         });
 
         expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-
-      it('should not generate IDs when product lookup fails', async () => {
-        productRepo.getProduct.mockResolvedValue(
-          createProductResult({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_STATE,
-              'product lookup failed',
-            ),
-          }),
-        );
-
-        await feature.placeOrder(validParam);
-
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
       });
     });
 

@@ -140,13 +140,13 @@ describe('OrderController', () => {
       });
     });
 
-    describe('when the order is in an invalid state', () => {
-      it('should return BAD_REQUEST', async () => {
+    describe('when the promotion has ended', () => {
+      it('should return CONFLICT', async () => {
         orderFeature.placeOrder.mockResolvedValue(
           createResult({
             status: new Status(
               StatusCode.VALIDATION_INVALID_STATE,
-              'Insufficient product quantity',
+              'promotion has ended',
             ),
           }),
         );
@@ -158,13 +158,17 @@ describe('OrderController', () => {
         );
 
         expect(response.status).toHaveBeenCalledWith(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.CONFLICT,
         );
 
-        expect(result.status).toEqual({
-          code: StatusCode.VALIDATION_INVALID_STATE,
-          message: 'Insufficient product quantity',
+        expect(result).toEqual({
+          status: {
+            code: StatusCode.VALIDATION_INVALID_STATE,
+            message: 'promotion has ended',
+          },
         });
+
+        expect(result).not.toHaveProperty('data');
       });
     });
 

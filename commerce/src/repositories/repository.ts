@@ -45,6 +45,7 @@ export interface OrderRepositoryInterface {
 
 export type CreateOrderParam = {
   idempotency_key: string
+  promotion_key?: string
   unique_id: string
   buyer_name: string
   buyer_email: string

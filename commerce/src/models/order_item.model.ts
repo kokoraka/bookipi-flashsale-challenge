@@ -46,7 +46,7 @@ export class OrderItem {
     nullable: true,
     default: null,
   })
-  product_snapshot?: Record<string, unknown>;
+  product_snapshot?: unknown;
 
   @Column({
     type: 'bigint',

@@ -31,7 +31,7 @@ test-coverage:
 .PHONY: test-performance
 test-performance: 
 	make monitor-process-window-background
-	k6 run --scenario smoke test/order.performance-spec.ts
+	k6 run --scenario spike test/order.performance-spec.ts
 
 .PHONY: test-analyze
 test-analyze:

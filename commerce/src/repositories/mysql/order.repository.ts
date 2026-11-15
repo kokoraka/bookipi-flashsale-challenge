@@ -25,16 +25,47 @@ export class OrderRepository implements OrderRepositoryInterface {
     try {
 
       const trxRes = await this.primarySource.transaction(async (manager) => {
-        const checkOrder = await manager.findOne(Order, {
-          where: {
-            idempotency_key: p.idempotency_key
+        const createRes = await manager
+          .createQueryBuilder()
+          .insert()
+          .into(Order)
+          .values({
+            idempotency_key: p.idempotency_key,
+            unique_id: p.unique_id,
+            promotion_key: p.promotion_key,
+            buyer_email: p.buyer_email,
+            buyer_name: p.buyer_name,
+            buyer_snapshot: p.buyer_snapshot,
+            grand_total: p.grand_total,
+            status: p.status,
+            placed_at: p.placed_at,
+            created_at: p.created_at,
+          })
+          .orIgnore()
+          .updateEntity(false)
+          .execute();
+        if (createRes.raw.affectedRows === 0) {
+          const order = await manager.findOne(Order, {
+            where: {
+              idempotency_key: p.idempotency_key,
+            },
+          });
+          if (!order) {
+            throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'failed create order')
           }
-        })
-        if (checkOrder) {
           return {
             exists: true,
-            order: checkOrder
+            order: order
           }
+        }
+
+        const order = await manager.findOne(Order, {
+          where: {
+            unique_id: p.unique_id,
+          },
+        });
+        if (!order) {
+          throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'failed find order')
         }
 
         const product = await manager.findOne(Product, {
@@ -47,7 +78,7 @@ export class OrderRepository implements OrderRepositoryInterface {
           }
         });
         if (!product) {
-          return new Status(StatusCode.VALIDATION_INVALID_STATE, 'unsufficient product stock')
+          throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'unsufficient product stock')
         }
 
         await manager.decrement(
@@ -55,21 +86,8 @@ export class OrderRepository implements OrderRepositoryInterface {
           'available_quantity', p.item.quantity,
         );
 
-        const order = manager.create(Order, {
-          idempotency_key: p.idempotency_key,
-          unique_id: p.unique_id,
-          buyer_email: p.buyer_email,
-          buyer_name: p.buyer_name,
-          buyer_snapshot: p.buyer_snapshot,
-          grand_total: p.grand_total,
-          status: p.status,
-          placed_at: p.placed_at,
-          created_at: p.created_at,
-        });
-        const savedOrder = await manager.save(Order, order);
-
         const item = manager.create(OrderItem, {
-          order_id: savedOrder.id,
+          order_id: order.id,
           unique_id: p.item.unique_id,
           name: p.item.name,
           description: p.item.description,
@@ -77,29 +95,20 @@ export class OrderRepository implements OrderRepositoryInterface {
           unit_price: p.item.unit_price,
           product_id: product.id,
           product_snapshot: p.item.product_snapshot,
-          created_at: savedOrder.created_at,
-          updated_at: savedOrder.updated_at,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
         });
         await manager.save(OrderItem, item);
 
-        const findOrder = await manager.findOneOrFail(Order, {
-          where: { id: savedOrder.id },
-        });
-
         return {
           exists: false,
-          order: findOrder,
+          order: order,
         }
       });
       if (!trxRes) {
         return {
           status: new Status(StatusCode.SYSTEM_INTERNAL_ERROR, 'failed create order'),
         };
-      }
-      if (trxRes instanceof Status) {
-        return {
-          status: trxRes
-        }
       }
 
       return {
@@ -110,7 +119,6 @@ export class OrderRepository implements OrderRepositoryInterface {
         }
       };
     } catch (e: unknown) {
-      console.error(e)
       return {
         status: Status.fromError(e),
       };
