@@ -1,6 +1,7 @@
 import { Status } from "./../entities/status/Status.js"
 
 export const REPOSITORY_PRODUCT_TOKEN = Symbol('REPOSITORY_PRODUCT_TOKEN');
+export const REPOSITORY_ORDER_TOKEN = Symbol('REPOSITORY_ORDER_TOKEN');
 
 export interface ProductRepositoryInterface {
   getProduct(p: GetProductParam): Promise<GetProductResult>
@@ -36,4 +37,41 @@ type FileObject = ProvidedObject & {
 type File = {
   id?: string
   public_url?: string
+}
+
+export interface OrderRepositoryInterface {
+  createOrder(p: CreateOrderParam): Promise<CreateOrderResult>
+}
+
+export type CreateOrderParam = {
+  idempotency_key: string
+  unique_id: string
+  buyer_name: string
+  buyer_email: string
+  buyer_snapshot?: Record<string, unknown>
+  status: string
+  grand_total: number
+  item: CreateOrderParamItem
+  placed_at: Date
+  created_at: Date
+}
+
+type CreateOrderParamItem = {
+  unique_id: string
+  name: string
+  description?: string
+  quantity: number
+  unit_price: number
+  product_id: string
+  product_snapshot?: Record<string, unknown>
+}
+
+export type CreateOrderResult = {
+  status: Status
+  order?: CreateOrderItem
+}
+
+export type CreateOrderItem = {
+  exists: boolean
+  unique_id: string
 }

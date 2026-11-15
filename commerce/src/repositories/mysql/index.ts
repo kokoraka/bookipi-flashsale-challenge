@@ -1,2 +1,4 @@
 export * from './product.module.js'
 export * from './product.repository.js'
+export * from './order.module.js'
+export * from './order.repository.js'
