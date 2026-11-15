@@ -53,7 +53,7 @@ export class OrderFeature implements OrderFeatureInterface {
       const promotion = new Promotion(isPromotionEnabled, promotionStartTime, promotionEndTime, currentTs)
       if (!promotion.isState(PromotionState.ONGOING)) {
         return {
-          status: new Status(StatusCode.AUTHZ_FORBIDDEN, promotion.getStateMessage())
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, promotion.getStateMessage())
         };
       }
 

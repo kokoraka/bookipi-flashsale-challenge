@@ -36,8 +36,8 @@ responses:
     $ref: "./../../main.yml#/components/responses/BadRequest"
   "401":
     $ref: "./../../main.yml#/components/responses/UnauthenticatedAccess"
-  "403":
-    $ref: "./../../main.yml#/components/responses/ForbiddenAccess"
+  "409":
+    $ref: "./../../main.yml#/components/responses/Conflict"
   "500":
     $ref: "./../../main.yml#/components/responses/ServerError"
 security:

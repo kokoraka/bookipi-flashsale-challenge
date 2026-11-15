@@ -147,7 +147,7 @@ describe('OrderFeature', () => {
 
   describe('placeOrder', () => {
     describe('when promotion is disabled', () => {
-      it('should return AUTHZ_FORBIDDEN', async () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: false,
@@ -162,7 +162,7 @@ describe('OrderFeature', () => {
 
         expect(result).toEqual({
           status: new Status(
-            StatusCode.AUTHZ_FORBIDDEN,
+            StatusCode.VALIDATION_INVALID_STATE,
             'promotion is disabled',
           ),
         });
@@ -174,7 +174,7 @@ describe('OrderFeature', () => {
     });
 
     describe('when promotion has not started', () => {
-      it('should return AUTHZ_FORBIDDEN', async () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: true,
@@ -189,7 +189,7 @@ describe('OrderFeature', () => {
 
         expect(result).toEqual({
           status: new Status(
-            StatusCode.AUTHZ_FORBIDDEN,
+            StatusCode.VALIDATION_INVALID_STATE,
             'promotion is not started yet',
           ),
         });
@@ -201,7 +201,7 @@ describe('OrderFeature', () => {
     });
 
     describe('when promotion has ended', () => {
-      it('should return AUTHZ_FORBIDDEN', async () => {
+      it('should return VALIDATION_INVALID_STATE', async () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: true,
@@ -216,7 +216,7 @@ describe('OrderFeature', () => {
 
         expect(result).toEqual({
           status: new Status(
-            StatusCode.AUTHZ_FORBIDDEN,
+            StatusCode.VALIDATION_INVALID_STATE,
             'promotion has ended',
           ),
         });

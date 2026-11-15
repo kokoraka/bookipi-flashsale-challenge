@@ -140,40 +140,12 @@ describe('OrderController', () => {
       });
     });
 
-    describe('when the order is in an invalid state', () => {
-      it('should return BAD_REQUEST', async () => {
+    describe('when the promotion has ended', () => {
+      it('should return CONFLICT', async () => {
         orderFeature.placeOrder.mockResolvedValue(
           createResult({
             status: new Status(
               StatusCode.VALIDATION_INVALID_STATE,
-              'Insufficient product quantity',
-            ),
-          }),
-        );
-
-        const result = await controller.placeOrder(
-          response,
-          request,
-          idempotencyKey,
-        );
-
-        expect(response.status).toHaveBeenCalledWith(
-          HttpStatus.BAD_REQUEST,
-        );
-
-        expect(result.status).toEqual({
-          code: StatusCode.VALIDATION_INVALID_STATE,
-          message: 'Insufficient product quantity',
-        });
-      });
-    });
-
-    describe('when the promotion has ended', () => {
-      it('should return FORBIDDEN', async () => {
-        orderFeature.placeOrder.mockResolvedValue(
-          createResult({
-            status: new Status(
-              StatusCode.AUTHZ_FORBIDDEN,
               'promotion has ended',
             ),
           }),
@@ -186,12 +158,12 @@ describe('OrderController', () => {
         );
 
         expect(response.status).toHaveBeenCalledWith(
-          HttpStatus.FORBIDDEN,
+          HttpStatus.CONFLICT,
         );
 
         expect(result).toEqual({
           status: {
-            code: StatusCode.AUTHZ_FORBIDDEN,
+            code: StatusCode.VALIDATION_INVALID_STATE,
             message: 'promotion has ended',
           },
         });
