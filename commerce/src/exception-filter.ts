@@ -10,9 +10,9 @@ import type { Response } from 'express';
 import { Status } from './entities/status/Status.js';
 import { StatusCode } from './entities/status/StatusCode.js';
 
-@Catch(HttpException)
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const httpCode = exception instanceof HttpException
@@ -26,9 +26,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       .json({ status });
   }
 
-  private parseStatus(exception: HttpException): Status {
+  private parseStatus(exception: unknown): Status {
     let statusCode = StatusCode.SYSTEM_INTERNAL_ERROR;
-    let statusMessage = exception.message;
+    let statusMessage = 'Internal server error';
+    if (exception instanceof HttpException) {
+      statusMessage = exception.message;
+    }
+
     if (exception instanceof NotFoundException) {
       statusCode = StatusCode.RESOURCE_NOT_FOUND;
     }
