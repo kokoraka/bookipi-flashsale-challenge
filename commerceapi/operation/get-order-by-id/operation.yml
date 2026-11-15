@@ -1,8 +1,8 @@
-operationId: GetFlashsaleOrderById
-summary: get flashsale order
-description: get flashsale order
+operationId: GetOrderById
+summary: get order
+description: get order
 tags:
-  - flashsale
+  - order
 parameters:
   - $ref: "./../../main.yml#/components/parameters/CorrelationId"
   - $ref: "./../../main.yml#/components/parameters/ObjectId"
