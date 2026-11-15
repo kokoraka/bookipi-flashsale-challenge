@@ -41,6 +41,7 @@ export const options = {
 
 function testPlaceOrder() {
   const host = 'http://localhost:4001';
+  const promotionId = '01a1df0b-e512-70bf-9515-86fe13cd8791';
   const productId = '01a1dd34-b2fc-7fa1-b7e1-b98267225dfa';
   const quantity = '1';
   const idempotencyKey = uuidv4()
@@ -49,7 +50,8 @@ function testPlaceOrder() {
     name: faker.person.name(),
     email: faker.person.email(),
     item_id: productId,
-    quantity
+    quantity,
+    promotion_id: promotionId,
   }, {
     headers: {
       'Idempotency-Key': idempotencyKey
