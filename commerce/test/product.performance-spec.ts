@@ -47,7 +47,7 @@ export const options = {
 
 function testGetProductById() {
   const host = 'http://localhost:4001';
-  const productId = '930ea41d-93e4-4fff-83f7-78681ad4';
+  const productId = '01a1dd34-b2fc-7fa1-b7e1-b98267225dfa';
   const res = http.get(`${host}/v1/flashsale/products/${productId}`);
 
   check(res, {
