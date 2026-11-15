@@ -76,11 +76,13 @@ export class Status extends Error {
   }
 
   public static fromError(e: unknown): Status {
+    if (e instanceof Status) {
+      return e
+    }
+
     let message = "unknown error"
     if (e instanceof Error) {
       message = e.message
-    } else if (e instanceof Status) {
-      return e
     }
 
     return new Status(
