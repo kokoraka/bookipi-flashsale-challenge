@@ -168,6 +168,38 @@ describe('OrderController', () => {
       });
     });
 
+    describe('when the promotion has ended', () => {
+      it('should return FORBIDDEN', async () => {
+        orderFeature.placeOrder.mockResolvedValue(
+          createResult({
+            status: new Status(
+              StatusCode.AUTHZ_FORBIDDEN,
+              'promotion has ended',
+            ),
+          }),
+        );
+
+        const result = await controller.placeOrder(
+          response,
+          request,
+          idempotencyKey,
+        );
+
+        expect(response.status).toHaveBeenCalledWith(
+          HttpStatus.FORBIDDEN,
+        );
+
+        expect(result).toEqual({
+          status: {
+            code: StatusCode.AUTHZ_FORBIDDEN,
+            message: 'promotion has ended',
+          },
+        });
+
+        expect(result).not.toHaveProperty('data');
+      });
+    });
+
     describe('when an unexpected error occurs', () => {
       it('should return INTERNAL_SERVER_ERROR', async () => {
         orderFeature.placeOrder.mockResolvedValue(

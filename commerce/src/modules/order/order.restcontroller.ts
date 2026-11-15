@@ -26,6 +26,8 @@ export class OrderController {
       let httpCode = HttpStatus.INTERNAL_SERVER_ERROR
       if (placeRes.status.any([StatusCode.VALIDATION_INVALID_PARAM, StatusCode.VALIDATION_INVALID_STATE])) {
         httpCode = HttpStatus.BAD_REQUEST
+      } else if (placeRes.status.is(StatusCode.AUTHZ_FORBIDDEN)) {
+        httpCode = HttpStatus.FORBIDDEN
       }
       res.status(httpCode)
       return {

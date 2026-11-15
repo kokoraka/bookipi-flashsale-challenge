@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as z from 'zod';
 import { Status, StatusCode } from '../../entities/status/index.js'
 import { SERVICE_ID_GENERATOR } from '../../services/idgen.service.js'
@@ -7,6 +8,7 @@ import type { OrderRepositoryInterface, ProductRepositoryInterface } from '../..
 import { REPOSITORY_ORDER_TOKEN, REPOSITORY_PRODUCT_TOKEN } from '../../repositories/repository.js'
 import { OrderStatus } from './../../entities/order/OrderStatus.js'
 import { } from '../../repositories/repository.js'
+import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js';
 
 export interface OrderFeatureInterface {
   placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult>
@@ -33,6 +35,7 @@ type PlaceOrderItem = {
 @Injectable()
 export class OrderFeature implements OrderFeatureInterface {
   constructor(
+    private readonly configService: ConfigService,
     @Inject(SERVICE_ID_GENERATOR)
     private readonly idGenerator: IdGeneratorInterface,
     @Inject(REPOSITORY_ORDER_TOKEN)
@@ -43,6 +46,17 @@ export class OrderFeature implements OrderFeatureInterface {
 
   async placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult> {
     try {
+      const currentTs = new Date()
+      const isPromotionEnabled = this.configService.get<boolean>('PROMOTION_ENABLED') ?? false
+      const promotionStartTime = new Date(parseInt(this.configService.get<string>('PROMOTION_START_TIME') ?? '0'))
+      const promotionEndTime = new Date(parseInt(this.configService.get<string>('PROMOTION_END_TIME') ?? '0'))
+      const promotion = new Promotion(isPromotionEnabled, promotionStartTime, promotionEndTime, currentTs)
+      if (!promotion.isState(PromotionState.ONGOING)) {
+        return {
+          status: new Status(StatusCode.AUTHZ_FORBIDDEN, promotion.getStateMessage())
+        };
+      }
+
       const validationRule = z.object({
         idempotency_key: z.string().trim().min(1).max(36),
         name: z.string().trim().min(1).max(128),
@@ -72,7 +86,6 @@ export class OrderFeature implements OrderFeatureInterface {
           status: new Status(StatusCode.VALIDATION_INVALID_PARAM, 'failed generate id')
         }
       }
-      const currentTs = new Date()
 
       const createRes = await this.orderRepo.createOrder({
         idempotency_key: validateRes.data.idempotency_key,
