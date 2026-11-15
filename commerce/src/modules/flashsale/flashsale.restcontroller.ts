@@ -83,7 +83,7 @@ export class FlashSaleController {
         promotion: {
           unique_id: getRes.promotion.unique_id,
           start_at: getRes.promotion.start_at.getTime(),
-          end_at: getRes.promotion.end_at?.getTime(),
+          end_at: getRes.promotion.end_at.getTime(),
         },
         promotion_state: getRes.promotion_state
       }
