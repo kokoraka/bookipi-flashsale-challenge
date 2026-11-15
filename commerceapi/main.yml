@@ -15,6 +15,8 @@ paths:
     $ref: "./path/info.yml"
   /v1/flashsale/products/{id}:
     $ref: "./path/flashsale_product_id.yml"
+  /v1/flashsale/promotions/{id}:
+    $ref: "./path/flashsale_promotion_id.yml"
   /v1/orders:
     $ref: "./path/order.yml"
 components:
@@ -58,6 +60,14 @@ components:
       $ref: "./operation/get-flashsale-product-by-id/response_data.yml"
     GetFlashsaleProductByIdProduct:
       $ref: "./operation/get-flashsale-product-by-id/response_product.yml"
+
+    # promotion
+    GetFlashsalePromotionByIdResponse:
+      $ref: "./operation/get-flashsale-promotion-by-id/response_body.yml"
+    GetFlashsalePromotionByIdData:
+      $ref: "./operation/get-flashsale-promotion-by-id/response_data.yml"
+    GetFlashsalePromotionByIdPromotion:
+      $ref: "./operation/get-flashsale-promotion-by-id/response_promotion.yml"
 
     # order
     PlaceOrderRequest:

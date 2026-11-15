@@ -1,0 +1,2 @@
+get:
+  $ref: "./../operation/get-flashsale-promotion-by-id/operation.yml"

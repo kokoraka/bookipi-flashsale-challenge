@@ -1,0 +1,10 @@
+value:
+  status:
+    code: SUCCESS
+    message: success get promotion
+  data:
+    promotion:
+      unique_id: 930ea41d-93e4-4fff-83f7-78681ad4
+      start_at: 1776482979237
+      end_at: 1776482979237
+    promotion_state: 'ongoing'

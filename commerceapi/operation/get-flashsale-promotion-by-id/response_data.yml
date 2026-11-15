@@ -1,0 +1,9 @@
+type: object
+required:
+  - promotion
+  - promotion_state
+properties:
+  promotion:
+    $ref: "./response_promotion.yml"
+  promotion_state:
+    type: string
