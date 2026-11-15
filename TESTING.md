@@ -6,7 +6,7 @@
 - NPM = 11.19.1
 - CPU = i7-12700H Laptop 14 Core
 - Memory = 32GB DDR5
-- Database = MySQL default config no replica
+- Database = MySQL default config with replica
 - Service = NestJS rest api
 
 ## Commerce API
@@ -66,8 +66,7 @@ Testing held by running the performance test script, the result is collected thr
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | ok | 0% | 13.24ms | 33.36ms | 242.6ms | 3.02 | 51.97% | 95.47MB |
 
-100 qty
-There's no over-sell
+100 qty, There's no over-sell
 
 2. Spike Testing 2m Spike up-to 2K VU, down to 0 in 1m
 
@@ -75,6 +74,4 @@ There's no over-sell
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | not ok | 88.97% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
 
-5000 qty
-There's no over-sell
-Found p95 spike on attempt 1
+5000 qty, There's no over-sell, found p95 spike on attempt 1
