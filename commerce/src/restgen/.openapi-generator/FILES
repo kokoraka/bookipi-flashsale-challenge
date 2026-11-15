@@ -22,7 +22,6 @@ models/ObjectSerializer.ts
 models/PlaceOrderData.ts
 models/PlaceOrderOrder.ts
 models/PlaceOrderRequest.ts
-models/PlaceOrderRequestItem.ts
 models/PlaceOrderResponse.ts
 models/RequestPagination.ts
 models/ResponseInfo.ts

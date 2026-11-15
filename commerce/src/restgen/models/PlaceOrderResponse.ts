@@ -16,7 +16,7 @@ import { HttpFile } from '../http/http.js';
 
 export class PlaceOrderResponse {
     'status': ResponseStatus;
-    'data': PlaceOrderData;
+    'data'?: PlaceOrderData;
 
     static readonly discriminator: string | undefined = undefined;
 

@@ -9,7 +9,6 @@ export * from '../models/ModelFile.js';
 export * from '../models/PlaceOrderData.js';
 export * from '../models/PlaceOrderOrder.js';
 export * from '../models/PlaceOrderRequest.js';
-export * from '../models/PlaceOrderRequestItem.js';
 export * from '../models/PlaceOrderResponse.js';
 export * from '../models/RequestPagination.js';
 export * from '../models/ResponseInfo.js';
@@ -29,7 +28,6 @@ import { ModelFile } from '../models/ModelFile.js';
 import { PlaceOrderData } from '../models/PlaceOrderData.js';
 import { PlaceOrderOrder } from '../models/PlaceOrderOrder.js';
 import { PlaceOrderRequest } from '../models/PlaceOrderRequest.js';
-import { PlaceOrderRequestItem } from '../models/PlaceOrderRequestItem.js';
 import { PlaceOrderResponse } from '../models/PlaceOrderResponse.js';
 import { RequestPagination } from '../models/RequestPagination.js';
 import { ResponseInfo } from '../models/ResponseInfo.js';
@@ -65,7 +63,6 @@ let typeMap: {[index: string]: any} = {
     "PlaceOrderData": PlaceOrderData,
     "PlaceOrderOrder": PlaceOrderOrder,
     "PlaceOrderRequest": PlaceOrderRequest,
-    "PlaceOrderRequestItem": PlaceOrderRequestItem,
     "PlaceOrderResponse": PlaceOrderResponse,
     "RequestPagination": RequestPagination,
     "ResponseInfo": ResponseInfo,

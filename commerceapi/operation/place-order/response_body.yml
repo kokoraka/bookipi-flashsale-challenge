@@ -1,7 +1,6 @@
 type: object
 required:
   - status
-  - data
 properties:
   status:
     $ref: "./../../schema/response_status.yml"

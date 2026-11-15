@@ -62,8 +62,6 @@ components:
     # order
     PlaceOrderRequest:
       $ref: "./operation/place-order/request_body.yml"
-    PlaceOrderRequestItem:
-      $ref: "./operation/place-order/request_item.yml"
     PlaceOrderResponse:
       $ref: "./operation/place-order/response_body.yml"
     PlaceOrderData:

@@ -2,13 +2,16 @@ type: object
 required:
   - email
   - name
-  - items
+  - item_id
+  - quantity
 properties:
   email:
     type: string
   name:
     type: string
-  items:
-    type: array
-    items:
-      $ref: "./request_item.yml"
+  item_id:
+    type: string
+  quantity:
+    type: string
+    format: decimal
+    description: decimal

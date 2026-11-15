@@ -10,13 +10,16 @@
  * Do not edit the class manually.
  */
 
-import { PlaceOrderRequestItem } from '../models/PlaceOrderRequestItem.js';
 import { HttpFile } from '../http/http.js';
 
 export class PlaceOrderRequest {
     'email': string;
     'name': string;
-    'items': Array<PlaceOrderRequestItem>;
+    'item_id': string;
+    /**
+    * decimal
+    */
+    'quantity': string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -36,10 +39,16 @@ export class PlaceOrderRequest {
             "format": ""
         },
         {
-            "name": "items",
-            "baseName": "items",
-            "type": "Array<PlaceOrderRequestItem>",
+            "name": "item_id",
+            "baseName": "item_id",
+            "type": "string",
             "format": ""
+        },
+        {
+            "name": "quantity",
+            "baseName": "quantity",
+            "type": "string",
+            "format": "decimal"
         }    ];
 
     static getAttributeTypeMap() {
