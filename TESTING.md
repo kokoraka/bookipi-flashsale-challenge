@@ -73,7 +73,7 @@ There's no over-sell
 
 | attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | not ok | 39% | 6.5s | 28.19s | 26.15s | 140.33 | 60.09% | 168.07MB |
+| 1 | not ok | 88.97% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
 
 5000 qty
 There's no over-sell

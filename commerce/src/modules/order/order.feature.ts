@@ -48,6 +48,7 @@ export class OrderFeature implements OrderFeatureInterface {
     try {
       const currentTs = new Date()
       const isPromotionEnabled = this.configService.get<boolean>('PROMOTION_ENABLED') ?? false
+      const promotionId = this.configService.get<string>('PROMOTION_ID')
       const promotionStartTime = new Date(parseInt(this.configService.get<string>('PROMOTION_START_TIME') ?? '0'))
       const promotionEndTime = new Date(parseInt(this.configService.get<string>('PROMOTION_END_TIME') ?? '0'))
       const promotion = new Promotion(isPromotionEnabled, promotionStartTime, promotionEndTime, currentTs)
@@ -90,6 +91,7 @@ export class OrderFeature implements OrderFeatureInterface {
       const createRes = await this.orderRepo.createOrder({
         idempotency_key: validateRes.data.idempotency_key,
         unique_id: genIds?.ids[0].text,
+        promotion_key: promotionId,
         buyer_email: validateRes.data.email,
         buyer_name: validateRes.data.name,
         status: OrderStatus.PENDING,
