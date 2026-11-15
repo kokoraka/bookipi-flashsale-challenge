@@ -1,0 +1,21 @@
+type: object
+required:
+  - unique_id
+  - name
+  - quantity
+  - unit_price
+properties:
+  unique_id:
+    type: string
+  name:
+    type: string
+  description:
+    type: string
+  quantity:
+    type: string
+    format: decimal
+    description: decimal
+  unit_price:
+    type: string
+    format: decimal
+    description: decimal

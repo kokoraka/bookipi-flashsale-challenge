@@ -1,0 +1,36 @@
+type: object
+required:
+  - unique_id
+  - buyer_email
+  - buyer_name
+  - status
+  - grand_total
+  - placed_at
+  - created_at
+  - items
+properties:
+  unique_id:
+    type: string
+  buyer_email:
+    type: string
+  buyer_name:
+    type: string
+  status:
+    type: string
+  grand_total:
+    type: string
+    format: decimal
+    description: decimal
+  placed_at:
+    type: integer
+    format: int64
+  created_at:
+    type: integer
+    format: int64
+  updated_at:
+    type: integer
+    format: int64
+  items:
+    type: array
+    items:
+      $ref: "./response_item.yml"

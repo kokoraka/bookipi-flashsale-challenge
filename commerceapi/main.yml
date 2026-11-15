@@ -19,6 +19,8 @@ paths:
     $ref: "./path/flashsale_promotion_id.yml"
   /v1/orders:
     $ref: "./path/order.yml"
+  /v1/orders/{id}:
+    $ref: "./path/order_id.yml"
 components:
   parameters:
     ObjectId:
@@ -78,6 +80,15 @@ components:
       $ref: "./operation/place-order/response_data.yml"
     PlaceOrderOrder:
       $ref: "./operation/place-order/response_order.yml"
+
+    GetOrderByIdResponse:
+      $ref: "./operation/get-order-by-id/response_body.yml"
+    GetOrderByIdData:
+      $ref: "./operation/get-order-by-id/response_data.yml"
+    GetOrderByIdOrder:
+      $ref: "./operation/get-order-by-id/response_order.yml"
+    GetOrderByIdItem:
+      $ref: "./operation/get-order-by-id/response_item.yml"
 
   responses:
     BadRequest:
