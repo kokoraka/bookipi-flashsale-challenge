@@ -17,6 +17,9 @@ models/GetAppInfoResponse.ts
 models/GetFlashsaleProductByIdData.ts
 models/GetFlashsaleProductByIdProduct.ts
 models/GetFlashsaleProductByIdResponse.ts
+models/GetFlashsalePromotionByIdData.ts
+models/GetFlashsalePromotionByIdPromotion.ts
+models/GetFlashsalePromotionByIdResponse.ts
 models/ModelFile.ts
 models/ObjectSerializer.ts
 models/PlaceOrderData.ts

@@ -1,0 +1,14 @@
+type: object
+required:
+  - unique_id
+  - start_at
+  - end_at
+properties:
+  unique_id:
+    type: string
+  start_at:
+    type: integer
+    format: int64
+  end_at:
+    type: integer
+    format: int64

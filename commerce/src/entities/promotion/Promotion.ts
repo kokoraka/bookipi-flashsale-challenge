@@ -50,7 +50,7 @@ export class Promotion {
     return this.getStateCode() === state
   }
 
-  private valid(): boolean {
+  public valid(): boolean {
     const currentTimestamp = this.currentTime.getTime()
     const startTimestamp = this.startTime.getTime()
     const endTimestamp = this.endTime.getTime()
