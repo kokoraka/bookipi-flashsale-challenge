@@ -19,7 +19,7 @@ export class PromotionRepository implements PromotionRepositoryInterface {
   async getPromotion(p: GetPromotionParam): Promise<GetPromotionResult> {
     try {
       const currentTs = new Date()
-      const isPromotionEnabled = this.configService.get<boolean>('PROMOTION_ENABLED') ?? false
+      const isPromotionEnabled = this.configService.get<string>('PROMOTION_ENABLED') === 'true'
       const promotionId = this.configService.get<string>('PROMOTION_ID') ?? ''
       const promotionStartTime = new Date(parseInt(this.configService.get<string>('PROMOTION_START_TIME') ?? '0'))
       const promotionEndTime = new Date(parseInt(this.configService.get<string>('PROMOTION_END_TIME') ?? '0'))
