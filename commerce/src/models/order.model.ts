@@ -25,6 +25,12 @@ export class Order {
   idempotency_key: string;
 
   @Column({
+    name: 'promotion_key',
+    nullable: true,
+  })
+  promotion_key?: string;
+
+  @Column({
     name: 'buyer_name',
   })
   buyer_name: string;
@@ -40,7 +46,7 @@ export class Order {
     nullable: true,
     default: null,
   })
-  buyer_snapshot?: Record<string, unknown>;
+  buyer_snapshot?: unknown;
 
   @Column({
     name: 'status',
