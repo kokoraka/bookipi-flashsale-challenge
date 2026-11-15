@@ -1,0 +1,17 @@
+type: object
+required:
+  - email
+  - name
+  - item_id
+  - quantity
+properties:
+  email:
+    type: string
+  name:
+    type: string
+  item_id:
+    type: string
+  quantity:
+    type: string
+    format: decimal
+    description: decimal

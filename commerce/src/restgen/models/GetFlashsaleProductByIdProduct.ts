@@ -58,7 +58,7 @@ export class GetFlashsaleProductByIdProduct {
             "name": "selling_price",
             "baseName": "selling_price",
             "type": "string",
-            "format": ""
+            "format": "decimal"
         },
         {
             "name": "created_at",

@@ -11,6 +11,10 @@ import { GetFlashsaleProductByIdData } from '../models/GetFlashsaleProductByIdDa
 import { GetFlashsaleProductByIdProduct } from '../models/GetFlashsaleProductByIdProduct.js';
 import { GetFlashsaleProductByIdResponse } from '../models/GetFlashsaleProductByIdResponse.js';
 import { ModelFile } from '../models/ModelFile.js';
+import { PlaceOrderData } from '../models/PlaceOrderData.js';
+import { PlaceOrderOrder } from '../models/PlaceOrderOrder.js';
+import { PlaceOrderRequest } from '../models/PlaceOrderRequest.js';
+import { PlaceOrderResponse } from '../models/PlaceOrderResponse.js';
 import { RequestPagination } from '../models/RequestPagination.js';
 import { ResponseInfo } from '../models/ResponseInfo.js';
 import { ResponseStatus } from '../models/ResponseStatus.js';

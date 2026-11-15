@@ -17,7 +17,7 @@ export type GetProductResult = {
   product?: GetProductItem
 }
 
-export type GetProductItem = {
+type GetProductItem = {
   unique_id: string
   name: string
   description?: string

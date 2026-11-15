@@ -1,0 +1,7 @@
+value:
+  status:
+    code: SUCCESS
+    message: success place order
+  data:
+    order:
+      unique_id: bff26848-a727-443f-9459-9ab044d13fbd

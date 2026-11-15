@@ -1,0 +1,6 @@
+name: Idempotency-Key
+in: header
+required: false
+description: idempotency key to uniquely identify the object
+schema:
+  type: string

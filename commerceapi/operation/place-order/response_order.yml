@@ -1,0 +1,6 @@
+type: object
+required:
+  - unique_id
+properties:
+  unique_id:
+    type: string

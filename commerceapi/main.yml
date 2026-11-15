@@ -15,12 +15,16 @@ paths:
     $ref: "./path/info.yml"
   /v1/flashsale/products/{id}:
     $ref: "./path/flashsale_product_id.yml"
+  /v1/orders:
+    $ref: "./path/order.yml"
 components:
   parameters:
     ObjectId:
       $ref: "./parameter/object_id.yml"
     CorrelationId:
       $ref: "./parameter/correlation_id.yml"
+    IdempotencyKey:
+      $ref: "./parameter/idempotency_key.yml"
   schemas:
     ResponseInfo:
       $ref: "./schema/response_info.yml"
@@ -54,6 +58,16 @@ components:
       $ref: "./operation/get-flashsale-product-by-id/response_data.yml"
     GetFlashsaleProductByIdProduct:
       $ref: "./operation/get-flashsale-product-by-id/response_product.yml"
+
+    # order
+    PlaceOrderRequest:
+      $ref: "./operation/place-order/request_body.yml"
+    PlaceOrderResponse:
+      $ref: "./operation/place-order/response_body.yml"
+    PlaceOrderData:
+      $ref: "./operation/place-order/response_data.yml"
+    PlaceOrderOrder:
+      $ref: "./operation/place-order/response_order.yml"
 
   responses:
     BadRequest:

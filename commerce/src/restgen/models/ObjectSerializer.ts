@@ -6,6 +6,10 @@ export * from '../models/GetFlashsaleProductByIdData.js';
 export * from '../models/GetFlashsaleProductByIdProduct.js';
 export * from '../models/GetFlashsaleProductByIdResponse.js';
 export * from '../models/ModelFile.js';
+export * from '../models/PlaceOrderData.js';
+export * from '../models/PlaceOrderOrder.js';
+export * from '../models/PlaceOrderRequest.js';
+export * from '../models/PlaceOrderResponse.js';
 export * from '../models/RequestPagination.js';
 export * from '../models/ResponseInfo.js';
 export * from '../models/ResponseStatus.js';
@@ -21,6 +25,10 @@ import { GetFlashsaleProductByIdData } from '../models/GetFlashsaleProductByIdDa
 import { GetFlashsaleProductByIdProduct } from '../models/GetFlashsaleProductByIdProduct.js';
 import { GetFlashsaleProductByIdResponse } from '../models/GetFlashsaleProductByIdResponse.js';
 import { ModelFile } from '../models/ModelFile.js';
+import { PlaceOrderData } from '../models/PlaceOrderData.js';
+import { PlaceOrderOrder } from '../models/PlaceOrderOrder.js';
+import { PlaceOrderRequest } from '../models/PlaceOrderRequest.js';
+import { PlaceOrderResponse } from '../models/PlaceOrderResponse.js';
 import { RequestPagination } from '../models/RequestPagination.js';
 import { ResponseInfo } from '../models/ResponseInfo.js';
 import { ResponseStatus } from '../models/ResponseStatus.js';
@@ -52,6 +60,10 @@ let typeMap: {[index: string]: any} = {
     "GetFlashsaleProductByIdProduct": GetFlashsaleProductByIdProduct,
     "GetFlashsaleProductByIdResponse": GetFlashsaleProductByIdResponse,
     "ModelFile": ModelFile,
+    "PlaceOrderData": PlaceOrderData,
+    "PlaceOrderOrder": PlaceOrderOrder,
+    "PlaceOrderRequest": PlaceOrderRequest,
+    "PlaceOrderResponse": PlaceOrderResponse,
     "RequestPagination": RequestPagination,
     "ResponseInfo": ResponseInfo,
     "ResponseStatus": ResponseStatus,
