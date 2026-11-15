@@ -1,0 +1,9 @@
+type: object
+required:
+  - item_id
+  - quantity
+properties:
+  item_id:
+    type: string
+  quantity:
+    type: string

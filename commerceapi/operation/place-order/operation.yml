@@ -1,0 +1,33 @@
+operationId: PlaceOrder
+summary: place order
+description: place single order
+tags:
+  - order
+parameters:
+  - $ref: "./../../main.yml#/components/parameters/CorrelationId"
+  - $ref: "./../../main.yml#/components/parameters/IdempotencyKey"
+requestBody:
+  description: order information
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "./request_body.yml"
+responses:
+  "201":
+    description: success place order
+    content:
+      application/json:
+        schema:
+          $ref: "./response_body.yml"
+        examples:
+          "Success":
+            $ref: "./example_success.yml"
+  "400":
+    $ref: "./../../main.yml#/components/responses/BadRequest"
+  "401":
+    $ref: "./../../main.yml#/components/responses/UnauthenticatedAccess"
+  "500":
+    $ref: "./../../main.yml#/components/responses/ServerError"
+security:
+  - bearerAuth: []

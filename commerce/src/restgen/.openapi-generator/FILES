@@ -19,6 +19,11 @@ models/GetFlashsaleProductByIdProduct.ts
 models/GetFlashsaleProductByIdResponse.ts
 models/ModelFile.ts
 models/ObjectSerializer.ts
+models/PlaceOrderData.ts
+models/PlaceOrderOrder.ts
+models/PlaceOrderRequest.ts
+models/PlaceOrderRequestItem.ts
+models/PlaceOrderResponse.ts
 models/RequestPagination.ts
 models/ResponseInfo.ts
 models/ResponseStatus.ts

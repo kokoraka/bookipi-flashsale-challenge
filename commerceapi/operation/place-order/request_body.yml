@@ -1,0 +1,14 @@
+type: object
+required:
+  - email
+  - name
+  - items
+properties:
+  email:
+    type: string
+  name:
+    type: string
+  items:
+    type: array
+    items:
+      $ref: "./request_item.yml"
