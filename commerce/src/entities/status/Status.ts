@@ -16,13 +16,15 @@ export type ValidationError = {
   params?: { [key: string]: string[] }
 }
 
-export class Status {
+export class Status extends Error {
 
   constructor(
     public code: string,
     public message: string,
     public validationErrors: Map<string, ValidationError[]> = new Map()
-  ) { }
+  ) {
+    super(message)
+  }
 
   public any(codes: string[]): boolean {
     return Status.any(this.code, codes.map((code) => code.toString()))
@@ -77,6 +79,8 @@ export class Status {
     let message = "unknown error"
     if (e instanceof Error) {
       message = e.message
+    } else if (e instanceof Status) {
+      return e
     }
 
     return new Status(
