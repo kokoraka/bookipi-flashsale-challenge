@@ -20,6 +20,10 @@ export class PlaceOrderRequest {
     * decimal
     */
     'quantity': string;
+    /**
+    * we set this field as required since we\'d like to enforce the strict 1 product, 1 quantity per-user, we assume we can use this endpoint for non-flashsale order as well in the future
+    */
+    'promotion_id': string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -49,6 +53,12 @@ export class PlaceOrderRequest {
             "baseName": "quantity",
             "type": "string",
             "format": "decimal"
+        },
+        {
+            "name": "promotion_id",
+            "baseName": "promotion_id",
+            "type": "string",
+            "format": ""
         }    ];
 
     static getAttributeTypeMap() {
