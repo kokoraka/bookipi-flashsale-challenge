@@ -17,7 +17,7 @@ export class FlashSaleController {
     const getRes = await this.flashSaleFeature.getProduct({
       unique_id: id,
     })
-    if (!getRes.status.valid() || !getRes.product) {
+    if (!getRes.status.valid() || !getRes.product || !getRes.inventory) {
       let httpCode = HttpStatus.INTERNAL_SERVER_ERROR
       if (getRes.status.is(StatusCode.RESOURCE_NOT_FOUND)) {
         httpCode = HttpStatus.NOT_FOUND
@@ -46,6 +46,9 @@ export class FlashSaleController {
           thumbnail: getRes.product.thumbnail,
           created_at: getRes.product.created_at.getTime(),
           updated_at: getRes.product.updated_at?.getTime(),
+        },
+        inventory: {
+          available_quantity: getRes.inventory.available_quantity.toString(),
         }
       }
     }

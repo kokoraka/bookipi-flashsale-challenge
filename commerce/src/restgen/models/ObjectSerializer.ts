@@ -3,6 +3,7 @@ export * from '../models/Filter.js';
 export * from '../models/GetAppInfoData.js';
 export * from '../models/GetAppInfoResponse.js';
 export * from '../models/GetFlashsaleProductByIdData.js';
+export * from '../models/GetFlashsaleProductByIdInventory.js';
 export * from '../models/GetFlashsaleProductByIdProduct.js';
 export * from '../models/GetFlashsaleProductByIdResponse.js';
 export * from '../models/GetFlashsalePromotionByIdData.js';
@@ -29,6 +30,7 @@ import { Filter } from '../models/Filter.js';
 import { GetAppInfoData } from '../models/GetAppInfoData.js';
 import { GetAppInfoResponse } from '../models/GetAppInfoResponse.js';
 import { GetFlashsaleProductByIdData } from '../models/GetFlashsaleProductByIdData.js';
+import { GetFlashsaleProductByIdInventory } from '../models/GetFlashsaleProductByIdInventory.js';
 import { GetFlashsaleProductByIdProduct } from '../models/GetFlashsaleProductByIdProduct.js';
 import { GetFlashsaleProductByIdResponse } from '../models/GetFlashsaleProductByIdResponse.js';
 import { GetFlashsalePromotionByIdData } from '../models/GetFlashsalePromotionByIdData.js';
@@ -71,6 +73,7 @@ let typeMap: {[index: string]: any} = {
     "GetAppInfoData": GetAppInfoData,
     "GetAppInfoResponse": GetAppInfoResponse,
     "GetFlashsaleProductByIdData": GetFlashsaleProductByIdData,
+    "GetFlashsaleProductByIdInventory": GetFlashsaleProductByIdInventory,
     "GetFlashsaleProductByIdProduct": GetFlashsaleProductByIdProduct,
     "GetFlashsaleProductByIdResponse": GetFlashsaleProductByIdResponse,
     "GetFlashsalePromotionByIdData": GetFlashsalePromotionByIdData,

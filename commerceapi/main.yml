@@ -62,6 +62,8 @@ components:
       $ref: "./operation/get-flashsale-product-by-id/response_data.yml"
     GetFlashsaleProductByIdProduct:
       $ref: "./operation/get-flashsale-product-by-id/response_product.yml"
+    GetFlashsaleProductByIdInventory:
+      $ref: "./operation/get-flashsale-product-by-id/response_inventory.yml"
 
     # promotion
     GetFlashsalePromotionByIdResponse:

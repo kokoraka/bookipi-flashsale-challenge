@@ -1,6 +1,9 @@
 type: object
 required:
   - product
+  - inventory
 properties:
   product:
     $ref: "./response_product.yml"
+  inventory:
+    $ref: "./response_inventory.yml"

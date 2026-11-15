@@ -50,6 +50,9 @@ describe('FlashSaleController', () => {
       created_at: createdAt,
       updated_at: updatedAt,
     };
+    const inventory = {
+      available_quantity: 1000,
+    }
 
     const successStatus = {
       code: 'SUCCESS',
@@ -84,6 +87,7 @@ describe('FlashSaleController', () => {
         flashSaleFeature.getProduct.mockResolvedValue({
           status: successStatus,
           product,
+          inventory,
         });
 
         const result = await controller.getProduct(
@@ -113,6 +117,9 @@ describe('FlashSaleController', () => {
               created_at: createdAt.getTime(),
               updated_at: updatedAt.getTime(),
             },
+            inventory: {
+              available_quantity: inventory.available_quantity.toString(),
+            },
           },
         });
       });
@@ -128,6 +135,7 @@ describe('FlashSaleController', () => {
         flashSaleFeature.getProduct.mockResolvedValue({
           status: successStatus,
           product: productWithoutOptionalFields,
+          inventory,
         });
 
         const result = await controller.getProduct(
