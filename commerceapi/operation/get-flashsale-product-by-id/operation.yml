@@ -18,11 +18,7 @@ responses:
             $ref: "./example_success.yml"
   "400":
     $ref: "./../../main.yml#/components/responses/BadRequest"
-  "401":
-    $ref: "./../../main.yml#/components/responses/UnauthenticatedAccess"
   "404":
     $ref: "./../../main.yml#/components/responses/NotFound"
   "500":
     $ref: "./../../main.yml#/components/responses/ServerError"
-security:
-  - bearerAuth: []

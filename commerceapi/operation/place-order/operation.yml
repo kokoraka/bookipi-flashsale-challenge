@@ -40,5 +40,3 @@ responses:
     $ref: "./../../main.yml#/components/responses/Conflict"
   "500":
     $ref: "./../../main.yml#/components/responses/ServerError"
-security:
-  - bearerAuth: []
