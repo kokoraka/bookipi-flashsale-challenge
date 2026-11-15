@@ -2,6 +2,7 @@ import { Status } from "./../entities/status/Status.js"
 
 export const REPOSITORY_PRODUCT_TOKEN = Symbol('REPOSITORY_PRODUCT_TOKEN');
 export const REPOSITORY_ORDER_TOKEN = Symbol('REPOSITORY_ORDER_TOKEN');
+export const REPOSITORY_PROMOTION_TOKEN = Symbol('REPOSITORY_PROMOTION_TOKEN');
 
 export interface ProductRepositoryInterface {
   getProduct(p: GetProductParam): Promise<GetProductResult>
@@ -92,6 +93,26 @@ export type GetOrderItem = {
   description?: string
   quantity: number
   unit_price: number
+}
+
+export interface PromotionRepositoryInterface {
+  getPromotion(p: GetPromotionParam): Promise<GetPromotionResult>
+}
+
+export type GetPromotionParam = {
+  unique_id: string
+}
+
+export type GetPromotionResult = {
+  status: Status
+  promotion?: GetPromotionItem
+}
+
+export type GetPromotionItem = {
+  unique_id: string
+  is_enabled: boolean
+  start_at: Date
+  end_at: Date
 }
 
 type ProvidedObject = {

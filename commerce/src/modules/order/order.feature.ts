@@ -4,8 +4,8 @@ import * as z from 'zod';
 import { Status, StatusCode } from '../../entities/status/index.js'
 import { SERVICE_ID_GENERATOR } from '../../services/idgen.service.js'
 import type { IdGeneratorInterface } from '../../services/idgen.service.js'
-import type { OrderRepositoryInterface, ProductRepositoryInterface } from '../../repositories/repository.js'
-import { REPOSITORY_ORDER_TOKEN, REPOSITORY_PRODUCT_TOKEN } from '../../repositories/repository.js'
+import type { OrderRepositoryInterface, ProductRepositoryInterface, PromotionRepositoryInterface } from '../../repositories/repository.js'
+import { REPOSITORY_ORDER_TOKEN, REPOSITORY_PRODUCT_TOKEN, REPOSITORY_PROMOTION_TOKEN } from '../../repositories/repository.js'
 import { OrderStatus } from './../../entities/order/OrderStatus.js'
 import { } from '../../repositories/repository.js'
 import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js';
@@ -21,6 +21,7 @@ export type PlaceOrderParam = {
   email?: string
   item_id?: string
   quantity?: string
+  promotion_id?: string
 }
 
 export type PlaceOrderResult = {
@@ -71,25 +72,16 @@ export class OrderFeature implements OrderFeatureInterface {
     @Inject(REPOSITORY_ORDER_TOKEN)
     private readonly orderRepo: OrderRepositoryInterface,
     @Inject(REPOSITORY_PRODUCT_TOKEN)
-    private readonly productRepo: ProductRepositoryInterface
+    private readonly productRepo: ProductRepositoryInterface,
+    @Inject(REPOSITORY_PROMOTION_TOKEN)
+    private readonly promotionRepo: PromotionRepositoryInterface
   ) { }
 
   async placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult> {
     try {
-      const currentTs = new Date()
-      const isPromotionEnabled = this.configService.get<boolean>('PROMOTION_ENABLED') ?? false
-      const promotionId = this.configService.get<string>('PROMOTION_ID')
-      const promotionStartTime = new Date(parseInt(this.configService.get<string>('PROMOTION_START_TIME') ?? '0'))
-      const promotionEndTime = new Date(parseInt(this.configService.get<string>('PROMOTION_END_TIME') ?? '0'))
-      const promotion = new Promotion(isPromotionEnabled, promotionStartTime, promotionEndTime, currentTs)
-      if (!promotion.isState(PromotionState.ONGOING)) {
-        return {
-          status: new Status(StatusCode.VALIDATION_INVALID_STATE, promotion.getStateMessage())
-        };
-      }
-
       const validationRule = z.object({
         idempotency_key: z.string().trim().min(1).max(36),
+        promotion_id: z.string().trim().min(1).max(36),
         name: z.string().trim().min(1).max(128),
         email: z.email().trim().min(3).max(188).toLowerCase(),
         item_id: z.string().trim().min(1).max(64),
@@ -100,6 +92,23 @@ export class OrderFeature implements OrderFeatureInterface {
         return {
           status: new Status(StatusCode.VALIDATION_INVALID_PARAM, 'invalid parameter')
         }
+      }
+
+      const getPromotion = await this.promotionRepo.getPromotion({
+        unique_id: validateRes.data.promotion_id
+      })
+      if (!getPromotion.status.is(StatusCode.SUCCESS) || !getPromotion.promotion) {
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_PARAM, 'promotion not found')
+        }
+      }
+
+      const currentTs = new Date()
+      const promotion = new Promotion(getPromotion.promotion.is_enabled, getPromotion.promotion.start_at, getPromotion.promotion.end_at, currentTs)
+      if (!promotion.isState(PromotionState.ONGOING)) {
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, promotion.getStateMessage())
+        };
       }
 
       const getProduct = await this.productRepo.getProduct({
@@ -121,7 +130,7 @@ export class OrderFeature implements OrderFeatureInterface {
       const createRes = await this.orderRepo.createOrder({
         idempotency_key: validateRes.data.idempotency_key,
         unique_id: genIds?.ids[0].text,
-        promotion_key: promotionId,
+        promotion_key: p.promotion_id,
         buyer_email: validateRes.data.email,
         buyer_name: validateRes.data.name,
         status: OrderStatus.PENDING,

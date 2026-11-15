@@ -1,9 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Status, StatusCode } from '../../entities/status/index.js'
 import { Promotion } from '../../entities/promotion/Promotion.js';
-import type { ProductRepositoryInterface } from '../../repositories/repository.js'
-import { REPOSITORY_PRODUCT_TOKEN } from '../../repositories/repository.js'
+import type { ProductRepositoryInterface, PromotionRepositoryInterface } from '../../repositories/repository.js'
+import { REPOSITORY_PRODUCT_TOKEN, REPOSITORY_PROMOTION_TOKEN } from '../../repositories/repository.js'
 import { FileObject } from './../file/file.js'
 
 export interface FlashSaleFeatureInterface {
@@ -49,9 +48,10 @@ type GetPromotionItem = {
 @Injectable()
 export class FlashSaleFeature implements FlashSaleFeatureInterface {
   constructor(
-    private readonly configService: ConfigService,
     @Inject(REPOSITORY_PRODUCT_TOKEN)
-    private readonly productRepo: ProductRepositoryInterface
+    private readonly productRepo: ProductRepositoryInterface,
+    @Inject(REPOSITORY_PROMOTION_TOKEN)
+    private readonly promotionRepo: PromotionRepositoryInterface
   ) { }
 
   async getProduct(p: GetProductParam): Promise<GetProductResult> {
@@ -68,24 +68,24 @@ export class FlashSaleFeature implements FlashSaleFeatureInterface {
 
   async getPromotion(p: GetPromotionParam): Promise<GetPromotionResult> {
     try {
-      const currentTs = new Date()
-      const isPromotionEnabled = this.configService.get<boolean>('PROMOTION_ENABLED') ?? false
-      const promotionId = this.configService.get<string>('PROMOTION_ID') ?? ''
-      const promotionStartTime = new Date(parseInt(this.configService.get<string>('PROMOTION_START_TIME') ?? '0'))
-      const promotionEndTime = new Date(parseInt(this.configService.get<string>('PROMOTION_END_TIME') ?? '0'))
-      const promotion = new Promotion(isPromotionEnabled, promotionStartTime, promotionEndTime, currentTs)
-      if (p.unique_id != promotionId || !promotion.valid()) {
+      const getRes = await this.promotionRepo.getPromotion({
+        unique_id: p.unique_id
+      })
+      if (!getRes.status.is(StatusCode.SUCCESS) || !getRes.promotion) {
         return {
-          status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'promotion not found'),
-        };
+          status: getRes.status
+        }
       }
+
+      const currentTs = new Date()
+      const promotion = new Promotion(getRes.promotion.is_enabled, getRes.promotion?.start_at, getRes.promotion.end_at, currentTs)
 
       return Promise.resolve({
         status: new Status(StatusCode.SUCCESS, 'success get promotion'),
         promotion: {
-          unique_id: promotionId,
-          start_at: promotionStartTime,
-          end_at: promotionEndTime,
+          unique_id: getRes.promotion.unique_id,
+          start_at: getRes.promotion.start_at,
+          end_at: getRes.promotion.end_at,
         },
         promotion_state: promotion.getStateCode().toString()
       })
