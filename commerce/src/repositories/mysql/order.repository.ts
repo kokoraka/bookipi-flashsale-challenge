@@ -75,20 +75,27 @@ export class OrderRepository implements OrderRepositoryInterface {
         const product = await manager.findOne(Product, {
           where: {
             unique_id: p.item.product_id,
-            available_quantity: MoreThanOrEqual(p.item.quantity),
           },
-          lock: {
-            mode: 'pessimistic_write'
-          }
         });
         if (!product) {
-          throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'unsufficient product stock')
+          throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'failed find product')
         }
 
-        await manager.decrement(
-          Product, { id: product.id },
-          'available_quantity', p.item.quantity,
+        const decRes = await manager.decrement(
+          Product,
+          {
+            unique_id: p.item.product_id,
+            available_quantity: MoreThanOrEqual(p.item.quantity),
+          },
+          'available_quantity',
+          p.item.quantity,
         );
+        if (decRes.affected === 0) {
+          throw new Status(
+            StatusCode.VALIDATION_INVALID_STATE,
+            'insufficient product stock',
+          );
+        }
 
         const item = manager.create(OrderItem, {
           order_id: order.id,

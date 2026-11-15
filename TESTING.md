@@ -72,6 +72,58 @@ Testing held by running the performance test script, the result is collected thr
 
 | attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | not ok | 88.97% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
+| 1 | not ok | 8% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
+| 2 | not ok | 7% | 1.61s | 28.38s | 2.2s | 383.31 | 86.74% | 188.02MB |
 
 5000 qty, There's no over-sell, found p95 spike on attempt 1
+
+#### Optimization Attempt
+
+1. Database Bottleneck detected
+
+during spike test attempt 1, p95 reached 4.81s, and system is only able to hit 250rps.
+i found out bottleneck happened due to pessimistic locking applied on place order repo
+
+```ts
+  const product = await manager.findOne(Product, {
+    where: {
+      unique_id: p.item.product_id,
+      available_quantity: MoreThanOrEqual(p.item.quantity),
+    },
+    lock: {
+      mode: 'pessimistic_write'
+    }
+  });
+  if (!product) {
+    throw new Status(StatusCode.VALIDATION_INVALID_STATE, 'unsufficient product stock')
+  }
+
+  await manager.decrement(
+    Product, { id: product.id },
+    'available_quantity', p.item.quantity,
+  );
+  
+```
+
+i removed the lock and put an atomic update instead
+
+```ts
+  const decRes = await manager.decrement(
+    Product,
+    {
+      unique_id: p.item.product_id,
+      available_quantity: MoreThanOrEqual(p.item.quantity),
+    },
+    'available_quantity',
+    p.item.quantity,
+  );
+  if (decRes.affected === 0) {
+    throw new Status(
+      StatusCode.VALIDATION_INVALID_STATE,
+      'insufficient product stock',
+    );
+  }
+```
+
+p95 reduced to `2.2s` and rps increased to `383.31`
+
