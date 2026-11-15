@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { FileObject } from './file.model.js';
 import { OrderItem } from './order_item.model.js';
 import { EpochMillisecondsTransformer } from './type.js';
 
@@ -41,7 +40,7 @@ export class Order {
     nullable: true,
     default: null,
   })
-  buyer_snapshot?: FileObject;
+  buyer_snapshot?: Record<string, unknown>;
 
   @Column({
     name: 'status',

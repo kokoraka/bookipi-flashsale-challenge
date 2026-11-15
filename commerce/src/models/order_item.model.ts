@@ -1,6 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import type { Relation } from 'typeorm';
-import { FileObject } from './file.model.js';
 import { EpochMillisecondsTransformer } from './type.js';
 import type { Order } from './order.model.js';
 
@@ -47,7 +46,7 @@ export class OrderItem {
     nullable: true,
     default: null,
   })
-  product_snapshot?: FileObject;
+  product_snapshot?: Record<string, unknown>;
 
   @Column({
     type: 'bigint',
