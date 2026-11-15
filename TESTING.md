@@ -11,7 +11,9 @@
 
 ## Commerce API
 
-### Performance Testing
+### Get Product API
+
+#### Performance Testing
 
 Testing held by running the performance test script, the result is collected through the k6 result and .csv monitoring result
 
@@ -24,6 +26,8 @@ Testing held by running the performance test script, the result is collected thr
 | 3 | not ok | 0% | 62.68ms | 1.01s | 360.28ms | 942.18 | 48.55% | 93.04MB |
 | 4 | ok | 0% | 33.51ms | 762.43ms | 195.36ms | 967.90 | 66.61% | 76.37MB |
 
+Found p95 spike on attempt 3
+
 2. Stress Testing 2m30s Load up-to 5K VU, down to 0 in 20s
 
 | attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
@@ -31,7 +35,9 @@ Testing held by running the performance test script, the result is collected thr
 | 1 | not ok | 0% | 1.17s | 4s | 2.2s | 1470.99 | 15.75% | 202.92MB |
 | 2 | ok | 0% | 25.19ms | 352.85ms | 162.19ms | 3103.78 | 19.83% | 142.71MB |
 
-### Optimization Attempt
+p95 still below 300ms on attempt 2, i'd like to focus on place order implementation first for now
+
+#### Optimization Attempt
 
 1. Database Bottleneck detected
 
@@ -47,3 +53,28 @@ i added 2 database replica syncing to 1 primary database, and put 3 of them behi
 the result is attempt 2, p95 reduced to `162.19ms` and rps increased to `3103.78`
 
 it's seems the default database config did not allow us to run with performance mode, there is room for tweaking the database, but for now let's assume it's the max resource we can get by using the default config.
+
+### Place Order API
+
+#### Performance Testing
+
+Testing held by running the performance test script, the result is collected through the k6 result and .csv monitoring result
+
+1. Smoke Testing 30s up-to 5 VU
+
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | ok | 0% | 13.24ms | 33.36ms | 242.6ms | 3.02 | 51.97% | 95.47MB |
+
+100 qty
+There's no over-sell
+
+2. Spike Testing 2m Spike up-to 2K VU, down to 0 in 1m
+
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | not ok | 39% | 6.5s | 28.19s | 26.15s | 140.33 | 60.09% | 168.07MB |
+
+5000 qty
+There's no over-sell
+Found p95 spike on attempt 1

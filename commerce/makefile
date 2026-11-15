@@ -12,7 +12,9 @@ help:
 install:
 	npm i -g @nestjs/cli
 # window script
-	choco install k6
+# 	choco install k6
+	go install go.k6.io/xk6/cmd/xk6@latest
+	xk6 build --with github.com/grafana/xk6-faker
 
 .PHONY: start-dev
 start-dev: 
@@ -29,7 +31,7 @@ test-coverage:
 .PHONY: test-performance
 test-performance: 
 	make monitor-process-window-background
-	k6 run --scenario stress test/product.performance-spec.ts
+	k6 run --scenario smoke test/order.performance-spec.ts
 
 .PHONY: test-analyze
 test-analyze:
