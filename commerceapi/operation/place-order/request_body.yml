@@ -4,6 +4,7 @@ required:
   - name
   - item_id
   - quantity
+  - promotion_id
 properties:
   email:
     type: string
@@ -15,3 +16,6 @@ properties:
     type: string
     format: decimal
     description: decimal
+  promotion_id:
+    type: string
+    description: we set this field as required since we'd like to enforce the strict 1 product, 1 quantity per-user, we assume we can use this endpoint for non-flashsale order as well in the future

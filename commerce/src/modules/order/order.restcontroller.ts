@@ -22,6 +22,7 @@ export class OrderController {
       name: body?.name,
       item_id: body?.item_id,
       quantity: body?.quantity,
+      promotion_id: body?.promotion_id,
     })
     if (!placeRes.status.valid() || !placeRes.order) {
       let httpCode = HttpStatus.INTERNAL_SERVER_ERROR

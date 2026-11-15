@@ -2,9 +2,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { FlashSaleFeature } from './flashsale.feature.js';
 import { Status, StatusCode } from '../../entities/status/index.js';
-import type { ProductRepositoryInterface } from '../../repositories/repository.js';
+import type {
+  ProductRepositoryInterface,
+  PromotionRepositoryInterface,
+} from '../../repositories/repository.js';
 import { FileObject } from './../file/file.js';
-import type { ConfigService } from '@nestjs/config';
 
 describe('FlashSaleFeature', () => {
   let feature: FlashSaleFeature;
@@ -13,8 +15,8 @@ describe('FlashSaleFeature', () => {
     getProduct: ReturnType<typeof vi.fn>;
   };
 
-  let configService: {
-    get: ReturnType<typeof vi.fn>;
+  let promotionRepo: {
+    getPromotion: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -22,17 +24,18 @@ describe('FlashSaleFeature', () => {
       getProduct: vi.fn(),
     };
 
-    configService = {
-      get: vi.fn(),
+    promotionRepo = {
+      getPromotion: vi.fn(),
     };
 
     feature = new FlashSaleFeature(
-      configService as unknown as ConfigService,
       productRepo as unknown as ProductRepositoryInterface,
+      promotionRepo as unknown as PromotionRepositoryInterface,
     );
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -113,32 +116,19 @@ describe('FlashSaleFeature', () => {
     const startTime = new Date('2026-11-15T10:00:00.000Z');
     const endTime = new Date('2026-11-15T12:00:00.000Z');
 
-    describe('when promotion is enabled', () => {
+    const promotion = {
+      unique_id: promotionId,
+      is_enabled: true,
+      start_at: startTime,
+      end_at: endTime,
+    };
+
+    describe('when promotion is enabled and currently active', () => {
       it('returns promotion details and its state', async () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-11-15T11:00:00.000Z'));
 
-        configService.get.mockImplementation((key: string) => {
-          const config: Record<string, unknown> = {
-            PROMOTION_ENABLED: true,
-            PROMOTION_ID: promotionId,
-            PROMOTION_START_TIME: startTime.getTime().toString(),
-            PROMOTION_END_TIME: endTime.getTime().toString(),
-          };
-
-          return config[key];
-        });
-
-        const result = await feature.getPromotion({
-          unique_id: promotionId,
-        });
-
-        expect(configService.get).toHaveBeenCalledWith('PROMOTION_ENABLED');
-        expect(configService.get).toHaveBeenCalledWith('PROMOTION_ID');
-        expect(configService.get).toHaveBeenCalledWith('PROMOTION_START_TIME');
-        expect(configService.get).toHaveBeenCalledWith('PROMOTION_END_TIME');
-
-        expect(result).toEqual({
+        const expected = {
           status: new Status(StatusCode.SUCCESS, 'success get promotion'),
           promotion: {
             unique_id: promotionId,
@@ -146,68 +136,152 @@ describe('FlashSaleFeature', () => {
             end_at: endTime,
           },
           promotion_state: expect.any(String),
+        };
+
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: new Status(StatusCode.SUCCESS, 'success get promotion'),
+          promotion,
         });
+
+        const result = await feature.getPromotion({
+          unique_id: promotionId,
+        });
+
+        expect(promotionRepo.getPromotion).toHaveBeenCalledTimes(1);
+        expect(promotionRepo.getPromotion).toHaveBeenCalledWith({
+          unique_id: promotionId,
+        });
+
+        expect(result).toEqual(expected);
       });
     });
 
     describe('when promotion is disabled', () => {
-      it('returns promotion details with the disabled state', async () => {
+      it('returns promotion details with its disabled state', async () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-11-15T11:00:00.000Z'));
 
-        configService.get.mockImplementation((key: string) => {
-          const config: Record<string, unknown> = {
-            PROMOTION_ENABLED: false,
-            PROMOTION_ID: promotionId,
-            PROMOTION_START_TIME: startTime.getTime().toString(),
-            PROMOTION_END_TIME: endTime.getTime().toString(),
-          };
-
-          return config[key];
-        });
-
-        const result = await feature.getPromotion({
-          unique_id: promotionId,
-        });
-
-        expect(result).toEqual({
+        promotionRepo.getPromotion.mockResolvedValue({
           status: new Status(StatusCode.SUCCESS, 'success get promotion'),
           promotion: {
-            unique_id: promotionId,
-            start_at: startTime,
-            end_at: endTime,
+            ...promotion,
+            is_enabled: false,
           },
-          promotion_state: expect.any(String),
         });
+
+        const result = await feature.getPromotion({
+          unique_id: promotionId,
+        });
+
+        expect(result.status).toEqual(
+          new Status(StatusCode.SUCCESS, 'success get promotion'),
+        );
+        expect(result.promotion).toEqual({
+          unique_id: promotionId,
+          start_at: startTime,
+          end_at: endTime,
+        });
+        expect(result.promotion_state).toEqual(expect.any(String));
       });
     });
 
-    describe('when promotion configuration is missing', () => {
-      it('uses default configuration values', async () => {
-        configService.get.mockReturnValue(undefined);
+    describe('when promotion is not yet active', () => {
+      it('returns the promotion state before its start time', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-11-15T09:00:00.000Z'));
+
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: new Status(StatusCode.SUCCESS, 'success get promotion'),
+          promotion,
+        });
+
+        const result = await feature.getPromotion({
+          unique_id: promotionId,
+        });
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(true);
+        expect(result.promotion_state).toEqual(expect.any(String));
+      });
+    });
+
+    describe('when promotion has ended', () => {
+      it('returns the promotion state after its end time', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-11-15T13:00:00.000Z'));
+
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: new Status(StatusCode.SUCCESS, 'success get promotion'),
+          promotion,
+        });
+
+        const result = await feature.getPromotion({
+          unique_id: promotionId,
+        });
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(true);
+        expect(result.promotion_state).toEqual(expect.any(String));
+      });
+    });
+
+    describe('when promotion repository returns a non-success status', () => {
+      it('returns the repository status without promotion details', async () => {
+        const status = new Status(
+          StatusCode.RESOURCE_NOT_FOUND,
+          'promotion not found',
+        );
+
+        promotionRepo.getPromotion.mockResolvedValue({
+          status,
+        });
+
+        const result = await feature.getPromotion({
+          unique_id: promotionId,
+        });
+
+        expect(promotionRepo.getPromotion).toHaveBeenCalledWith({
+          unique_id: promotionId,
+        });
+
+        expect(result).toEqual({
+          status,
+        });
+        expect(result).not.toHaveProperty('promotion');
+        expect(result).not.toHaveProperty('promotion_state');
+      });
+    });
+
+    describe('when repository returns success without promotion data', () => {
+      it('returns the repository status without promotion details', async () => {
+        const status = new Status(StatusCode.SUCCESS, 'success');
+
+        promotionRepo.getPromotion.mockResolvedValue({
+          status,
+          promotion: undefined,
+        });
 
         const result = await feature.getPromotion({
           unique_id: promotionId,
         });
 
         expect(result).toEqual({
-          status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'promotion not found'),
+          status,
         });
+        expect(result).not.toHaveProperty('promotion');
+        expect(result).not.toHaveProperty('promotion_state');
       });
     });
 
-    describe('when configuration retrieval throws an Error', () => {
+    describe('when promotion repository throws an Error', () => {
       it('returns an error status', async () => {
-        const error = new Error('Configuration retrieval failed');
+        const error = new Error('Database connection failed');
 
-        configService.get.mockImplementation(() => {
-          throw error;
-        });
+        promotionRepo.getPromotion.mockRejectedValue(error);
 
         const result = await feature.getPromotion({
           unique_id: promotionId,
         });
 
+        expect(promotionRepo.getPromotion).toHaveBeenCalledTimes(1);
         expect(result).toEqual({
           status: Status.fromError(error),
         });
@@ -216,18 +290,17 @@ describe('FlashSaleFeature', () => {
       });
     });
 
-    describe('when configuration retrieval throws a non-Error value', () => {
+    describe('when promotion repository throws a non-Error value', () => {
       it('returns an error status', async () => {
-        const error = 'Unexpected configuration error';
+        const error = 'Unexpected repository error';
 
-        configService.get.mockImplementation(() => {
-          throw error;
-        });
+        promotionRepo.getPromotion.mockRejectedValue(error);
 
         const result = await feature.getPromotion({
           unique_id: promotionId,
         });
 
+        expect(promotionRepo.getPromotion).toHaveBeenCalledTimes(1);
         expect(result).toEqual({
           status: Status.fromError(error),
         });
