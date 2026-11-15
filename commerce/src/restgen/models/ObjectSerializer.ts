@@ -8,6 +8,10 @@ export * from '../models/GetFlashsaleProductByIdResponse.js';
 export * from '../models/GetFlashsalePromotionByIdData.js';
 export * from '../models/GetFlashsalePromotionByIdPromotion.js';
 export * from '../models/GetFlashsalePromotionByIdResponse.js';
+export * from '../models/GetOrderByIdData.js';
+export * from '../models/GetOrderByIdItem.js';
+export * from '../models/GetOrderByIdOrder.js';
+export * from '../models/GetOrderByIdResponse.js';
 export * from '../models/ModelFile.js';
 export * from '../models/PlaceOrderData.js';
 export * from '../models/PlaceOrderOrder.js';
@@ -30,6 +34,10 @@ import { GetFlashsaleProductByIdResponse } from '../models/GetFlashsaleProductBy
 import { GetFlashsalePromotionByIdData } from '../models/GetFlashsalePromotionByIdData.js';
 import { GetFlashsalePromotionByIdPromotion } from '../models/GetFlashsalePromotionByIdPromotion.js';
 import { GetFlashsalePromotionByIdResponse } from '../models/GetFlashsalePromotionByIdResponse.js';
+import { GetOrderByIdData } from '../models/GetOrderByIdData.js';
+import { GetOrderByIdItem } from '../models/GetOrderByIdItem.js';
+import { GetOrderByIdOrder } from '../models/GetOrderByIdOrder.js';
+import { GetOrderByIdResponse } from '../models/GetOrderByIdResponse.js';
 import { ModelFile } from '../models/ModelFile.js';
 import { PlaceOrderData } from '../models/PlaceOrderData.js';
 import { PlaceOrderOrder } from '../models/PlaceOrderOrder.js';
@@ -68,6 +76,10 @@ let typeMap: {[index: string]: any} = {
     "GetFlashsalePromotionByIdData": GetFlashsalePromotionByIdData,
     "GetFlashsalePromotionByIdPromotion": GetFlashsalePromotionByIdPromotion,
     "GetFlashsalePromotionByIdResponse": GetFlashsalePromotionByIdResponse,
+    "GetOrderByIdData": GetOrderByIdData,
+    "GetOrderByIdItem": GetOrderByIdItem,
+    "GetOrderByIdOrder": GetOrderByIdOrder,
+    "GetOrderByIdResponse": GetOrderByIdResponse,
     "ModelFile": ModelFile,
     "PlaceOrderData": PlaceOrderData,
     "PlaceOrderOrder": PlaceOrderOrder,

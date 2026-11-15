@@ -51,7 +51,7 @@ export class Order {
   @Column({
     name: 'status',
   })
-  status?: string;
+  status: string;
 
   @Column({
     name: 'grand_total',

@@ -20,6 +20,10 @@ models/GetFlashsaleProductByIdResponse.ts
 models/GetFlashsalePromotionByIdData.ts
 models/GetFlashsalePromotionByIdPromotion.ts
 models/GetFlashsalePromotionByIdResponse.ts
+models/GetOrderByIdData.ts
+models/GetOrderByIdItem.ts
+models/GetOrderByIdOrder.ts
+models/GetOrderByIdResponse.ts
 models/ModelFile.ts
 models/ObjectSerializer.ts
 models/PlaceOrderData.ts

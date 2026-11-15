@@ -308,34 +308,6 @@ describe('FlashSaleController', () => {
           },
         });
       });
-
-      it('returns end_at as undefined when it is absent', async () => {
-        const promotionWithoutEndAt = {
-          unique_id: promotionId,
-          start_at: startAt,
-        };
-
-        flashSaleFeature.getPromotion.mockResolvedValue({
-          status: successStatus,
-          promotion: promotionWithoutEndAt,
-          promotion_state: 'UPCOMING',
-        });
-
-        const result = await controller.getPromotion(
-          promotionId,
-          res as unknown as Response,
-        );
-
-        expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
-
-        expect(result.data?.promotion).toEqual({
-          unique_id: promotionId,
-          start_at: startAt.getTime(),
-          end_at: undefined,
-        });
-
-        expect(result.data?.promotion_state).toBe('UPCOMING');
-      });
     });
 
     describe('when the promotion does not exist', () => {

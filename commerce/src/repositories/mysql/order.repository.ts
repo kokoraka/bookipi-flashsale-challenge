@@ -3,6 +3,8 @@ import {
   OrderRepositoryInterface,
   CreateOrderParam,
   CreateOrderResult,
+  GetOrderParam,
+  GetOrderResult,
 } from '../repository.js';
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -18,7 +20,9 @@ export class OrderRepository implements OrderRepositoryInterface {
 
   constructor(
     @InjectDataSource('primary')
-    private readonly primarySource: DataSource
+    private readonly primarySource: DataSource,
+    @InjectDataSource('secondary')
+    private readonly secondarySource: DataSource
   ) { }
 
   async createOrder(p: CreateOrderParam): Promise<CreateOrderResult> {
@@ -116,6 +120,71 @@ export class OrderRepository implements OrderRepositoryInterface {
         order: {
           exists: trxRes.exists,
           unique_id: trxRes.order.unique_id,
+        }
+      };
+    } catch (e: unknown) {
+      return {
+        status: Status.fromError(e),
+      };
+    }
+  }
+
+  async getOrder(p: GetOrderParam): Promise<GetOrderResult> {
+    try {
+      const order = await this.secondarySource.getRepository(Order)
+        .createQueryBuilder('orders')
+        .leftJoinAndSelect('orders.items', 'orderItems')
+        .select([
+          'orders.id',
+          'orders.unique_id',
+          'orders.buyer_email',
+          'orders.buyer_name',
+          'orders.status',
+          'orders.grand_total',
+          'orders.placed_at',
+          'orders.created_at',
+          'orders.updated_at',
+
+          'orderItems.id',
+          'orderItems.unique_id',
+          'orderItems.name',
+          'orderItems.description',
+          'orderItems.product_id',
+          'orderItems.quantity',
+          'orderItems.unit_price',
+          'orderItems.created_at',
+          'orderItems.updated_at',
+        ])
+        .where('orders.unique_id = :unique_id', {
+          unique_id: p.unique_id
+        })
+        .getOne();
+      if (!order) {
+        return {
+          status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'order not found'),
+        };
+      }
+
+      return {
+        status: new Status(StatusCode.SUCCESS, 'success get order'),
+        order: {
+          unique_id: order.unique_id,
+          buyer_email: order.buyer_email,
+          buyer_name: order.buyer_name,
+          status: order.status,
+          grand_total: order.grand_total,
+          placed_at: order.placed_at,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+          items: order.items.map((item) => {
+            return {
+              unique_id: item.unique_id,
+              name: item.name,
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+            }
+          })
         }
       };
     } catch (e: unknown) {

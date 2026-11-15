@@ -12,6 +12,7 @@ import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js
 
 export interface OrderFeatureInterface {
   placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult>
+  getOrder(p: GetOrderParam): Promise<GetOrderResult>
 }
 
 export type PlaceOrderParam = {
@@ -30,6 +31,35 @@ export type PlaceOrderResult = {
 type PlaceOrderItem = {
   exists: boolean
   unique_id: string
+}
+
+export type GetOrderParam = {
+  unique_id: string
+}
+
+export type GetOrderResult = {
+  status: Status
+  order?: GetOrderInfo
+}
+
+type GetOrderInfo = {
+  unique_id: string
+  buyer_name: string
+  buyer_email: string
+  status: string
+  grand_total: number
+  placed_at: Date
+  created_at: Date
+  updated_at?: Date
+  items: GetOrderItem[]
+}
+
+type GetOrderItem = {
+  unique_id: string
+  name: string
+  description?: string
+  quantity: number
+  unit_price: number
 }
 
 @Injectable()
@@ -120,6 +150,18 @@ export class OrderFeature implements OrderFeatureInterface {
           unique_id: createRes.order.unique_id,
         }
       }
+    } catch (e: unknown) {
+      return {
+        status: Status.fromError(e),
+      }
+    }
+  }
+
+  async getOrder(p: GetOrderParam): Promise<GetOrderResult> {
+    try {
+      return await this.orderRepo.getOrder({
+        unique_id: p.unique_id,
+      });
     } catch (e: unknown) {
       return {
         status: Status.fromError(e),

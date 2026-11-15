@@ -2,7 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigService } from '@nestjs/config';
 import { OrderFeature } from './order.feature.js';
-import type { PlaceOrderParam } from './order.feature.js';
+import type {
+  PlaceOrderParam,
+  GetOrderParam,
+} from './order.feature.js';
 import { Status, StatusCode } from '../../entities/status/index.js';
 import { OrderStatus } from '../../entities/order/OrderStatus.js';
 import type { IdGeneratorInterface } from '../../services/idgen.service.js';
@@ -17,6 +20,10 @@ type GetProductResult = Awaited<
 
 type CreateOrderResult = Awaited<
   ReturnType<OrderRepositoryInterface['createOrder']>
+>;
+
+type GetOrderResult = Awaited<
+  ReturnType<OrderRepositoryInterface['getOrder']>
 >;
 
 type GenerateIdsResult = ReturnType<
@@ -36,6 +43,7 @@ describe('OrderFeature', () => {
 
   let orderRepo: {
     createOrder: ReturnType<typeof vi.fn<OrderRepositoryInterface['createOrder']>>;
+    getOrder: ReturnType<typeof vi.fn<OrderRepositoryInterface['getOrder']>>;
   };
 
   let productRepo: {
@@ -48,6 +56,10 @@ describe('OrderFeature', () => {
     email: 'customer@example.com',
     item_id: 'product-123',
     quantity: '1',
+  };
+
+  const validGetOrderParam: GetOrderParam = {
+    unique_id: 'order-123',
   };
 
   const product = {
@@ -70,6 +82,10 @@ describe('OrderFeature', () => {
     result: Partial<CreateOrderResult>,
   ): CreateOrderResult => result as CreateOrderResult;
 
+  const createGetOrderResult = (
+    result: Partial<GetOrderResult>,
+  ): GetOrderResult => result as GetOrderResult;
+
   const createGenerateIdsResult = (
     result: Partial<GenerateIdsResult>,
   ): GenerateIdsResult => result as GenerateIdsResult;
@@ -78,6 +94,26 @@ describe('OrderFeature', () => {
     { text: 'order-123', binary: Buffer.from('order-123') },
     { text: 'line-123', binary: Buffer.from('line-123') },
   ];
+
+  const orderInfo = {
+    unique_id: 'order-123',
+    buyer_name: 'John Doe',
+    buyer_email: 'customer@example.com',
+    status: OrderStatus.PENDING,
+    grand_total: 10000,
+    placed_at: new Date('2026-11-15T10:00:00.000Z'),
+    created_at: new Date('2026-11-15T10:00:00.000Z'),
+    updated_at: new Date('2026-11-15T10:01:00.000Z'),
+    items: [
+      {
+        unique_id: 'line-123',
+        name: 'Product Name',
+        description: 'Product Description',
+        quantity: 1,
+        unit_price: 10000,
+      },
+    ],
+  };
 
   const mockProductFound = () => {
     productRepo.getProduct.mockResolvedValue(
@@ -112,11 +148,21 @@ describe('OrderFeature', () => {
     );
   };
 
+  const mockOrderFound = () => {
+    orderRepo.getOrder.mockResolvedValue(
+      createGetOrderResult({
+        status: new Status(StatusCode.SUCCESS, 'success'),
+        order: orderInfo,
+      }),
+    );
+  };
+
   beforeEach(() => {
     configService = {
       get: vi.fn<ConfigService['get']>((key: string) => {
         const config: Record<string, unknown> = {
           PROMOTION_ENABLED: true,
+          PROMOTION_ID: 'promotion-123',
           PROMOTION_START_TIME: String(promotionStartTime),
           PROMOTION_END_TIME: String(promotionEndTime),
         };
@@ -131,6 +177,7 @@ describe('OrderFeature', () => {
 
     orderRepo = {
       createOrder: vi.fn<OrderRepositoryInterface['createOrder']>(),
+      getOrder: vi.fn<OrderRepositoryInterface['getOrder']>(),
     };
 
     productRepo = {
@@ -151,8 +198,9 @@ describe('OrderFeature', () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: false,
-            PROMOTION_START_TIME: String(Date.now() + 60_000),
-            PROMOTION_END_TIME: String(Date.now() + 120_000),
+            PROMOTION_ID: 'promotion-123',
+            PROMOTION_START_TIME: String(promotionStartTime),
+            PROMOTION_END_TIME: String(promotionEndTime),
           };
 
           return config[key];
@@ -178,6 +226,7 @@ describe('OrderFeature', () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: true,
+            PROMOTION_ID: 'promotion-123',
             PROMOTION_START_TIME: String(Date.now() + 60_000),
             PROMOTION_END_TIME: String(Date.now() + 120_000),
           };
@@ -205,6 +254,7 @@ describe('OrderFeature', () => {
         configService.get.mockImplementation((key: string) => {
           const config: Record<string, unknown> = {
             PROMOTION_ENABLED: true,
+            PROMOTION_ID: 'promotion-123',
             PROMOTION_START_TIME: String(Date.now() - 120_000),
             PROMOTION_END_TIME: String(Date.now() - 60_000),
           };
@@ -426,6 +476,7 @@ describe('OrderFeature', () => {
           expect.objectContaining({
             idempotency_key: validParam.idempotency_key,
             unique_id: 'order-123',
+            promotion_key: 'promotion-123',
             buyer_email: 'customer@example.com',
             buyer_name: 'John Doe',
             status: OrderStatus.PENDING,
@@ -594,6 +645,105 @@ describe('OrderFeature', () => {
         orderRepo.createOrder.mockRejectedValue(error);
 
         const result = await feature.placeOrder(validParam);
+
+        expect(result).toEqual({
+          status: Status.fromError(error),
+        });
+      });
+    });
+  });
+
+  describe('getOrder', () => {
+    describe('when order is found', () => {
+      beforeEach(() => {
+        mockOrderFound();
+      });
+
+      it('should retrieve the order using the provided unique ID', async () => {
+        await feature.getOrder(validGetOrderParam);
+
+        expect(orderRepo.getOrder).toHaveBeenCalledExactlyOnceWith({
+          unique_id: validGetOrderParam.unique_id,
+        });
+      });
+
+      it('should return SUCCESS with the order details', async () => {
+        const result = await feature.getOrder(validGetOrderParam);
+
+        expect(result).toEqual({
+          status: new Status(StatusCode.SUCCESS, 'success'),
+          order: orderInfo,
+        });
+      });
+
+      it('should return the order items', async () => {
+        const result = await feature.getOrder(validGetOrderParam);
+
+        expect(result.order?.items).toEqual([
+          {
+            unique_id: 'line-123',
+            name: 'Product Name',
+            description: 'Product Description',
+            quantity: 1,
+            unit_price: 10000,
+          },
+        ]);
+      });
+    });
+
+    describe('when order is not found', () => {
+      it('should return the repository result without an order', async () => {
+        const status = new Status(
+          StatusCode.VALIDATION_INVALID_PARAM,
+          'order not found',
+        );
+
+        orderRepo.getOrder.mockResolvedValue(
+          createGetOrderResult({
+            status,
+            order: undefined,
+          }),
+        );
+
+        const result = await feature.getOrder(validGetOrderParam);
+
+        expect(result).toEqual({
+          status,
+          order: undefined,
+        });
+      });
+    });
+
+    describe('when order repository returns an unsuccessful status', () => {
+      it('should return the repository result', async () => {
+        const status = new Status(
+          StatusCode.VALIDATION_INVALID_STATE,
+          'unable to retrieve order',
+        );
+
+        orderRepo.getOrder.mockResolvedValue(
+          createGetOrderResult({
+            status,
+            order: undefined,
+          }),
+        );
+
+        const result = await feature.getOrder(validGetOrderParam);
+
+        expect(result).toEqual({
+          status,
+          order: undefined,
+        });
+      });
+    });
+
+    describe('when an unexpected exception occurs', () => {
+      it('should handle order repository exceptions', async () => {
+        const error = new Error('Order database unavailable');
+
+        orderRepo.getOrder.mockRejectedValue(error);
+
+        const result = await feature.getOrder(validGetOrderParam);
 
         expect(result).toEqual({
           status: Status.fromError(error),
