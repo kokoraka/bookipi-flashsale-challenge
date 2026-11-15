@@ -15,6 +15,7 @@ models/Filter.ts
 models/GetAppInfoData.ts
 models/GetAppInfoResponse.ts
 models/GetFlashsaleProductByIdData.ts
+models/GetFlashsaleProductByIdInventory.ts
 models/GetFlashsaleProductByIdProduct.ts
 models/GetFlashsaleProductByIdResponse.ts
 models/GetFlashsalePromotionByIdData.ts

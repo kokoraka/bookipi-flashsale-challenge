@@ -10,11 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { GetFlashsaleProductByIdInventory } from '../models/GetFlashsaleProductByIdInventory.js';
 import { GetFlashsaleProductByIdProduct } from '../models/GetFlashsaleProductByIdProduct.js';
 import { HttpFile } from '../http/http.js';
 
 export class GetFlashsaleProductByIdData {
     'product': GetFlashsaleProductByIdProduct;
+    'inventory': GetFlashsaleProductByIdInventory;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -25,6 +27,12 @@ export class GetFlashsaleProductByIdData {
             "name": "product",
             "baseName": "product",
             "type": "GetFlashsaleProductByIdProduct",
+            "format": ""
+        },
+        {
+            "name": "inventory",
+            "baseName": "inventory",
+            "type": "GetFlashsaleProductByIdInventory",
             "format": ""
         }    ];
 

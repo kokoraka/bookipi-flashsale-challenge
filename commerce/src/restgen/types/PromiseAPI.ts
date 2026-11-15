@@ -7,6 +7,7 @@ import { Filter } from '../models/Filter.js';
 import { GetAppInfoData } from '../models/GetAppInfoData.js';
 import { GetAppInfoResponse } from '../models/GetAppInfoResponse.js';
 import { GetFlashsaleProductByIdData } from '../models/GetFlashsaleProductByIdData.js';
+import { GetFlashsaleProductByIdInventory } from '../models/GetFlashsaleProductByIdInventory.js';
 import { GetFlashsaleProductByIdProduct } from '../models/GetFlashsaleProductByIdProduct.js';
 import { GetFlashsaleProductByIdResponse } from '../models/GetFlashsaleProductByIdResponse.js';
 import { GetFlashsalePromotionByIdData } from '../models/GetFlashsalePromotionByIdData.js';

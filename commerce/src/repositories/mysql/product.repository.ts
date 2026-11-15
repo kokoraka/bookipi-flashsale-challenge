@@ -31,6 +31,7 @@ export class ProductRepository implements ProductRepositoryInterface {
           'products.thumbnail',
           'products.created_at',
           'products.updated_at',
+          'products.available_quantity',
         ])
         .where('unique_id = :unique_id', {
           unique_id: p.unique_id
@@ -52,6 +53,9 @@ export class ProductRepository implements ProductRepositoryInterface {
           thumbnail: product.thumbnail,
           created_at: product.created_at,
           updated_at: product.updated_at,
+        },
+        inventory: {
+          available_quantity: product.available_quantity,
         }
       };
     } catch (e: unknown) {

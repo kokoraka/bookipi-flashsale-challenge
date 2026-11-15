@@ -15,6 +15,7 @@ export type GetProductParam = {
 export type GetProductResult = {
   status: Status
   product?: GetProductItem
+  inventory?: GetProductInventory
 }
 
 export type GetProductItem = {
@@ -25,6 +26,10 @@ export type GetProductItem = {
   selling_price: number
   created_at: Date
   updated_at?: Date
+}
+
+type GetProductInventory = {
+  available_quantity: number
 }
 
 export interface OrderRepositoryInterface {
