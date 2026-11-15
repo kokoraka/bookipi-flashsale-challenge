@@ -26,21 +26,9 @@ export type GetProductItem = {
   updated_at?: Date
 }
 
-type ProvidedObject = {
-  provider: string
-}
-
-type FileObject = ProvidedObject & {
-  file: File
-}
-
-type File = {
-  id?: string
-  public_url?: string
-}
-
 export interface OrderRepositoryInterface {
   createOrder(p: CreateOrderParam): Promise<CreateOrderResult>
+  getOrder(p: GetOrderParam): Promise<GetOrderResult>
 }
 
 export type CreateOrderParam = {
@@ -75,4 +63,46 @@ export type CreateOrderResult = {
 export type CreateOrderItem = {
   exists: boolean
   unique_id: string
+}
+
+export type GetOrderParam = {
+  unique_id: string
+}
+
+export type GetOrderResult = {
+  status: Status
+  order?: GetOrderInfo
+}
+
+export type GetOrderInfo = {
+  unique_id: string
+  buyer_name: string
+  buyer_email: string
+  status: string
+  grand_total: number
+  placed_at: Date
+  created_at: Date
+  updated_at?: Date
+  items: GetOrderItem[]
+}
+
+export type GetOrderItem = {
+  unique_id: string
+  name: string
+  description?: string
+  quantity: number
+  unit_price: number
+}
+
+type ProvidedObject = {
+  provider: string
+}
+
+type FileObject = ProvidedObject & {
+  file: File
+}
+
+type File = {
+  id?: string
+  public_url?: string
 }
