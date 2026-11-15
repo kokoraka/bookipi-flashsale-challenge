@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController as RestAppController } from './app.restcontroller.js';
-import { ProductRepositoryModule } from './../../repositories/mysql/index.js'
 import { FlashSaleModule } from '../flashsale/flashsale.module.js'
+import { OrderModule } from '../order/order.module.js'
 import { AppService } from '../../services/app.service.js';
 
 @Module({
@@ -52,8 +52,8 @@ import { AppService } from '../../services/app.service.js';
       }),
       inject: [ConfigService],
     }),
-    ProductRepositoryModule,
-    FlashSaleModule
+    FlashSaleModule,
+    OrderModule
   ],
   controllers: [RestAppController],
   providers: [AppService],
