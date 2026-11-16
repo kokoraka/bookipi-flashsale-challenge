@@ -120,12 +120,13 @@ Testing held by running the performance test script, the result is collected thr
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | not ok | 8% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
 | 2 | not ok | 7% | 1.61s | 28.38s | 2.2s | 383.31 | 86.74% | 188.02MB |
+| 3 | not ok | 3% | 433.26ms | 30.49s | 427.43ms | 697.92 | N/A | N/A |
 
 5000 qty, There's no over-sell, found p95 spike on attempt 1
 
 #### Optimization Attempt
 
-1. Database Bottleneck detected
+1. Database locking bottleneck
 
 during spike test attempt 1, p95 reached 4.81s, and system is only able to hit 250rps.
 i found out bottleneck happened due to pessimistic locking applied on place order repo
@@ -172,4 +173,73 @@ i removed the lock and put an atomic update instead
 ```
 
 p95 reduced to `2.2s` and rps increased to `383.31`
+
+2. Database write exhausted
+
+based on prev attempt, we still unable to get higher throughput and lower p95.
+
+this happened because write operation is expensive and we don't setup our database with primary-primary setup so we can't write into multiple database server.
+
+i put the inventory counter into cache instead of writing into database directly, by doing this (attempt 3) i managed to reduce p95 to `427.43ms` and rps to `697.92`.
+
+```ts
+  const reserveRes = await this.inventoryService.reserveStock({
+    inventory_key: `inventory:${validateRes.data.item_id}`,
+    identifier_key: `order:${validateRes.data.item_id}`,
+    identifier_id: validateRes.data.email,
+    identifier_limit: `${MAX_ORDER_PER_IDENTIFIER}`,
+  })
+  if (reserveRes.code != ReserveStockCode.RESERVE_SUCCESS) {
+    switch (reserveRes.code) {
+      case ReserveStockCode.RESERVE_OUT_OF_STOCK:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'insufficient product stock'),
+        }
+      case ReserveStockCode.RESERVE_LIMIT_REACHED:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, `unable to order more than ${MAX_ORDER_PER_IDENTIFIER}`),
+        }
+      default:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'unable to reserve order'),
+        }
+    }
+  }
+
+  const orderId = genIds?.ids[0].text
+  const itemId = genIds?.ids[1].text
+
+  const createRes = await this.orderRepo.createOrder({
+    idempotency_key: validateRes.data.idempotency_key,
+    unique_id: orderId,
+    promotion_key: p.promotion_id,
+    buyer_email: validateRes.data.email,
+    buyer_name: validateRes.data.name,
+    status: OrderStatus.PENDING,
+    grand_total: getProduct.product.selling_price,
+    item: {
+      unique_id: itemId,
+      name: getProduct.product.name,
+      description: getProduct.product.description,
+      product_id: getProduct.product.unique_id,
+      quantity: validateRes.data.quantity,
+      unit_price: getProduct.product.selling_price,
+    },
+    placed_at: currentTs,
+    created_at: currentTs,
+  })
+  if (!createRes.status.is(StatusCode.SUCCESS) || !createRes.order) {
+    return {
+      status: createRes.status,
+    }
+  }
+
+  return {
+    status: new Status(StatusCode.SUCCESS, 'success place order'),
+    order: {
+      exists: createRes.order.exists,
+      unique_id: createRes.order.unique_id,
+    }
+  }
+```
 
