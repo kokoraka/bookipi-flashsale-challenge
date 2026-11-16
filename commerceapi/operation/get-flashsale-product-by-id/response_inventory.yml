@@ -1,8 +1,8 @@
 type: object
 required:
-  - available_quantity
+  - estimate_available_quantity
 properties:
-  available_quantity:
+  estimate_available_quantity:
     type: string
     format: decimal
     description: decimal

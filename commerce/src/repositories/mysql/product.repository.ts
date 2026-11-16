@@ -1,10 +1,13 @@
 
 import {
   ProductRepositoryInterface,
+  QueryOption,
   GetProductParam,
   GetProductResult,
 } from '../repository.js';
-import { Injectable } from '@nestjs/common';
+import { parseQueryOption } from '../query.js';
+import { Inject, Injectable } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Product } from './../../models/product.model.js';
@@ -15,12 +18,42 @@ import { StatusCode } from './../../entities/status/StatusCode.js';
 export class ProductRepository implements ProductRepositoryInterface {
 
   constructor(
+    @Inject(CACHE_MANAGER) private repoCache: Cache,
     @InjectDataSource('secondary')
     private readonly secondarySource: DataSource
   ) { }
 
-  async getProduct(p: GetProductParam): Promise<GetProductResult> {
+  async getProduct(p: GetProductParam, opts?: QueryOption): Promise<GetProductResult> {
     try {
+      const {
+        readCache,
+        writeCache,
+        cacheTtl,
+        cachePrefix,
+      } = parseQueryOption(opts)
+
+      const lookupKey = `${cachePrefix ? `${cachePrefix}:` : 'product:'}${p.unique_id}`
+      if (readCache) {
+        const cachedValue = await this.repoCache.get<Product>(lookupKey)
+        if (cachedValue) {
+          return {
+            status: new Status(StatusCode.SUCCESS, 'success get product'),
+            product: {
+              unique_id: cachedValue.unique_id,
+              name: cachedValue.name,
+              description: cachedValue.description,
+              selling_price: cachedValue.selling_price,
+              thumbnail: cachedValue.thumbnail,
+              created_at: cachedValue.created_at,
+              updated_at: cachedValue.updated_at,
+            },
+            inventory: {
+              available_quantity: cachedValue.available_quantity,
+            }
+          };
+        }
+      }
+
       const product = await this.secondarySource.getRepository(Product)
         .createQueryBuilder('products')
         .select([
@@ -41,6 +74,10 @@ export class ProductRepository implements ProductRepositoryInterface {
         return {
           status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'product not found'),
         };
+      }
+
+      if (writeCache) {
+        await this.repoCache.set(lookupKey, product, cacheTtl);
       }
 
       return {

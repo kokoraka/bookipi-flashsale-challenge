@@ -118,7 +118,7 @@ describe('FlashSaleController', () => {
               updated_at: updatedAt.getTime(),
             },
             inventory: {
-              available_quantity: inventory.available_quantity.toString(),
+              estimate_available_quantity: inventory.available_quantity.toString(),
             },
           },
         });

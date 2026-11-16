@@ -1,12 +1,15 @@
 
 import {
   OrderRepositoryInterface,
+  QueryOption,
   CreateOrderParam,
   CreateOrderResult,
   GetOrderParam,
   GetOrderResult,
 } from '../repository.js';
-import { Injectable } from '@nestjs/common';
+import { parseQueryOption } from '../query.js';
+import { Inject, Injectable } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, MoreThanOrEqual } from 'typeorm';
 import { Product } from '../../models/product.model.js';
@@ -19,6 +22,7 @@ import { StatusCode } from '../../entities/status/StatusCode.js';
 export class OrderRepository implements OrderRepositoryInterface {
 
   constructor(
+    @Inject(CACHE_MANAGER) private repoCache: Cache,
     @InjectDataSource('primary')
     private readonly primarySource: DataSource,
     @InjectDataSource('secondary')
@@ -136,8 +140,44 @@ export class OrderRepository implements OrderRepositoryInterface {
     }
   }
 
-  async getOrder(p: GetOrderParam): Promise<GetOrderResult> {
+  async getOrder(p: GetOrderParam, opts?: QueryOption): Promise<GetOrderResult> {
     try {
+      const {
+        readCache,
+        writeCache,
+        cacheTtl,
+        cachePrefix,
+      } = parseQueryOption(opts)
+
+      const lookupKey = `${cachePrefix ? `${cachePrefix}:` : 'order:'}${p.unique_id}`
+      if (readCache) {
+        const cachedValue = await this.repoCache.get<Order>(lookupKey)
+        if (cachedValue) {
+          return {
+            status: new Status(StatusCode.SUCCESS, 'success get order'),
+            order: {
+              unique_id: cachedValue.unique_id,
+              buyer_email: cachedValue.buyer_email,
+              buyer_name: cachedValue.buyer_name,
+              status: cachedValue.status,
+              grand_total: cachedValue.grand_total,
+              placed_at: cachedValue.placed_at,
+              created_at: cachedValue.created_at,
+              updated_at: cachedValue.updated_at,
+              items: cachedValue.items.map((item) => {
+                return {
+                  unique_id: item.unique_id,
+                  name: item.name,
+                  description: item.description,
+                  quantity: item.quantity,
+                  unit_price: item.unit_price,
+                }
+              })
+            }
+          };
+        }
+      }
+
       const order = await this.secondarySource.getRepository(Order)
         .createQueryBuilder('orders')
         .leftJoinAndSelect('orders.items', 'orderItems')
@@ -170,6 +210,10 @@ export class OrderRepository implements OrderRepositoryInterface {
         return {
           status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'order not found'),
         };
+      }
+
+      if (writeCache) {
+        await this.repoCache.set(lookupKey, order, cacheTtl);
       }
 
       return {

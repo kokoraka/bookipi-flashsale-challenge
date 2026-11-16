@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as z from 'zod';
 import { Status, StatusCode } from '../../entities/status/index.js'
 import { SERVICE_ID_GENERATOR } from '../../services/idgen.service.js'
@@ -66,7 +65,6 @@ type GetOrderItem = {
 @Injectable()
 export class OrderFeature implements OrderFeatureInterface {
   constructor(
-    private readonly configService: ConfigService,
     @Inject(SERVICE_ID_GENERATOR)
     private readonly idGenerator: IdGeneratorInterface,
     @Inject(REPOSITORY_ORDER_TOKEN)
@@ -170,6 +168,10 @@ export class OrderFeature implements OrderFeatureInterface {
     try {
       return await this.orderRepo.getOrder({
         unique_id: p.unique_id,
+      }, {
+        readCache: true,
+        writeCache: true,
+        cachePrefix: `order-detail`,
       });
     } catch (e: unknown) {
       return {

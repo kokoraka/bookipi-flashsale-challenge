@@ -48,7 +48,7 @@ export class FlashSaleController {
           updated_at: getRes.product.updated_at?.getTime(),
         },
         inventory: {
-          available_quantity: getRes.inventory.available_quantity.toString(),
+          estimate_available_quantity: getRes.inventory.available_quantity.toString(),
         }
       }
     }
