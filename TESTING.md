@@ -48,7 +48,13 @@ p95 still below 300ms on attempt 2, i'd like to focus on place order implementat
 
 | attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | not ok | 12.63% | 447.76ms | 26.61s | p(95)=1.92s | 4321.45 | 22.19% | 136.29MB |
+| 1 | not ok | 12.63% | 447.76ms | 26.61s | 1.92s | 4321.45 | 22.19% | 136.29MB |
+
+5. Stress Testing 2m30s Load up-to 20K VU, down to 0 in 20s
+
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | not ok | 58.77% | 506.93ms | 31.08s | 3.17s | 6775.90 | N/A | N/A |
 
 #### Optimization Attempt
 
@@ -75,7 +81,16 @@ the reason i use in-memory caching because i wanted to keep it simple first.
 now since i'm caching the response, i need to be able to invalidate the cache on certain resource (e.g: product.inventory.estimate_available_quantity).
 
 i doubled the amount of VU on test 3 with 10K VU to test whether i can get more throughput or not, the result i doubled the rps but the avg, max, and rps were also doubled (still ok).
-i runn another stress test 4 with 100K VU, the api is still running but cannot response successfully, `ECONREFUSED`, `dial tcp 127.0.0.1:4001: connectex: No connection could be made because the target machine actively refused it.`, so based on this test we can't achive 100K VU with only 1 instance of the service running.
+
+i runn another stress test 4 with 100K VU, the api is still running but cannot response successfully:
+- `ECONREFUSED`
+- `dial tcp 127.0.0.1:4001: connectex: No connection could be made because the target machine actively refused it.`
+- `ENOBUFS`
+- `dial tcp 127.0.0.1:4001: bind: An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full.` 
+
+3. Load Balancer with nginx
+
+after i dockerize the service, i no longer receive those error, but p95 and rps still not achive and my laptop hanged with 100K VU (10GB memory usage).
 
 ### Place Order API
 
