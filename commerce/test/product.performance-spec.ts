@@ -36,10 +36,10 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '20s', target: 40000 }, // traffic ramp-up from 1 to a higher 2000 users over 20s.
-        { duration: '30s', target: 60000 }, // ram-up at higher 3000 users for 30s
-        { duration: '40s', target: 80000 }, // ram-up at higher 4000 users for 40s
-        { duration: '50s', target: 100000 }, // ram-up at higher 5000 users for 50s
+        { duration: '20s', target: 4000 }, // traffic ramp-up from 1 to a higher 2000 users over 20s.
+        { duration: '30s', target: 8000 }, // ram-up at higher 3000 users for 30s
+        { duration: '40s', target: 16000 }, // ram-up at higher 4000 users for 40s
+        { duration: '50s', target: 20000 }, // ram-up at higher 5000 users for 50s
         { duration: '20s', target: 0 }, // ramp-down to 0 users
       ],
     },
