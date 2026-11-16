@@ -90,7 +90,15 @@ i runn another stress test 4 with 100K VU, the api is still running but cannot r
 
 3. Load Balancer with nginx
 
-after i dockerize the service, i no longer receive those error, but p95 and rps still not achive and my laptop hanged with 100K VU (10GB memory usage).
+after i dockerize the service, i sometimes still receive those error with 20K VU, but p95 and rps still not achieve and my laptop hanged with 100K VU (10GB memory usage).
+
+![Test Bottleneck](./docs/assets/k6-single-bottleneck.png)
+
+*image is running 20K VUs
+
+4. Centralized caching
+
+since i'm running more than 1 instance of the backend service, i need to centralize the caching, that's why i'm using redis.
 
 ### Place Order API
 
