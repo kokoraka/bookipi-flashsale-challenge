@@ -10,6 +10,14 @@ export const options = {
         { duration: '10s', target: 3 },
       ],
     },
+    spike: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 2000 }, // fast ramp-up to a high point
+        { duration: '1m', target: 0 }, // quick ramp-down to 0 users
+      ],
+    },
     stress: {
       executor: 'ramping-vus',
       startVUs: 0,
@@ -43,14 +51,6 @@ export const options = {
         { duration: '20s', target: 0 }, // ramp-down to 0 users
       ],
     },
-    spike: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 2000 }, // fast ramp-up to a high point
-        { duration: '1m', target: 0 }, // quick ramp-down to 0 users
-      ],
-    }
   },
   thresholds: {
     http_req_failed: ['rate<0.01'],

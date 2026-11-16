@@ -14,6 +14,14 @@ export const options = {
         { duration: '25s', target: 5 },
       ],
     },
+    spike: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 2000 }, // fast ramp-up to a high point
+        { duration: '1m', target: 0 }, // quick ramp-down to 0 users
+      ],
+    },
     stress: {
       executor: 'ramping-vus',
       startVUs: 0,
@@ -23,14 +31,6 @@ export const options = {
         { duration: '40s', target: 4000 }, // ram-up at higher 4000 users for 40s
         { duration: '50s', target: 5000 }, // ram-up at higher 5000 users for 50s
         { duration: '20s', target: 0 }, // ramp-down to 0 users
-      ],
-    },
-    spike: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 2000 }, // fast ramp-up to a high point
-        { duration: '1m', target: 0 }, // quick ramp-down to 0 users
       ],
     },
   },
