@@ -1,13 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
 import * as z from 'zod';
 import { Status, StatusCode } from '../../entities/status/index.js'
+import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js';
+import { OrderStatus } from '../../entities/order/OrderStatus.js';
 import { SERVICE_ID_GENERATOR } from '../../services/idgen.service.js'
 import type { IdGeneratorInterface } from '../../services/idgen.service.js'
 import type { OrderRepositoryInterface, ProductRepositoryInterface, PromotionRepositoryInterface } from '../../repositories/repository.js'
 import { REPOSITORY_ORDER_TOKEN, REPOSITORY_PRODUCT_TOKEN, REPOSITORY_PROMOTION_TOKEN } from '../../repositories/repository.js'
-import { OrderStatus } from './../../entities/order/OrderStatus.js'
-import { } from '../../repositories/repository.js'
-import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js';
+import { SERVICE_INVENTORY_TOKEN, ReserveStockCode } from '../../services/inventory.service.js';
+import type { InventoryServiceInterface } from '../../services/inventory.service.js'
+
+const MAX_ORDER_PER_IDENTIFIER = 1
 
 export interface OrderFeatureInterface {
   placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult>
@@ -72,7 +75,9 @@ export class OrderFeature implements OrderFeatureInterface {
     @Inject(REPOSITORY_PRODUCT_TOKEN)
     private readonly productRepo: ProductRepositoryInterface,
     @Inject(REPOSITORY_PROMOTION_TOKEN)
-    private readonly promotionRepo: PromotionRepositoryInterface
+    private readonly promotionRepo: PromotionRepositoryInterface,
+    @Inject(SERVICE_INVENTORY_TOKEN)
+    private readonly inventoryService: InventoryServiceInterface,
   ) { }
 
   async placeOrder(p: PlaceOrderParam): Promise<PlaceOrderResult> {
@@ -125,16 +130,42 @@ export class OrderFeature implements OrderFeatureInterface {
         }
       }
 
+      const reserveRes = await this.inventoryService.reserveStock({
+        inventory_key: `inventory:${validateRes.data.item_id}`,
+        identifier_key: `order:${validateRes.data.item_id}`,
+        identifier_id: validateRes.data.email,
+        identifier_limit: `${MAX_ORDER_PER_IDENTIFIER}`,
+      })
+      if (reserveRes.code != ReserveStockCode.RESERVE_SUCCESS) {
+        switch (reserveRes.code) {
+          case ReserveStockCode.RESERVE_OUT_OF_STOCK:
+            return {
+              status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'insufficient product stock'),
+            }
+          case ReserveStockCode.RESERVE_LIMIT_REACHED:
+            return {
+              status: new Status(StatusCode.VALIDATION_INVALID_STATE, `unable to order more than ${MAX_ORDER_PER_IDENTIFIER}`),
+            }
+          default:
+            return {
+              status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'unable to reserve order'),
+            }
+        }
+      }
+
+      const orderId = genIds?.ids[0].text
+      const itemId = genIds?.ids[1].text
+
       const createRes = await this.orderRepo.createOrder({
         idempotency_key: validateRes.data.idempotency_key,
-        unique_id: genIds?.ids[0].text,
+        unique_id: orderId,
         promotion_key: p.promotion_id,
         buyer_email: validateRes.data.email,
         buyer_name: validateRes.data.name,
         status: OrderStatus.PENDING,
         grand_total: getProduct.product.selling_price,
         item: {
-          unique_id: genIds?.ids[1].text,
+          unique_id: itemId,
           name: getProduct.product.name,
           description: getProduct.product.description,
           product_id: getProduct.product.unique_id,

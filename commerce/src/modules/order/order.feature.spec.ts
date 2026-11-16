@@ -15,6 +15,13 @@ import type {
   ProductRepositoryInterface,
   PromotionRepositoryInterface,
 } from '../../repositories/repository.js';
+import {
+  SERVICE_INVENTORY_TOKEN,
+  ReserveStockCode,
+} from '../../services/inventory.service.js';
+import type {
+  InventoryServiceInterface,
+} from '../../services/inventory.service.js';
 
 type GetProductResult = Awaited<
   ReturnType<ProductRepositoryInterface['getProduct']>
@@ -34,6 +41,10 @@ type GetPromotionResult = Awaited<
 
 type GenerateIdsResult = ReturnType<
   IdGeneratorInterface['generateIds']
+>;
+
+type ReserveStockResult = Awaited<
+  ReturnType<InventoryServiceInterface['reserveStock']>
 >;
 
 describe('OrderFeature', () => {
@@ -58,6 +69,12 @@ describe('OrderFeature', () => {
 
   let promotionRepo: {
     getPromotion: ReturnType<typeof vi.fn<PromotionRepositoryInterface['getPromotion']>>;
+  };
+
+  let inventoryService: {
+    reserveStock: ReturnType<
+      typeof vi.fn<InventoryServiceInterface['reserveStock']>
+    >;
   };
 
   const NOW = new Date('2026-11-15T11:00:00.000Z');
@@ -191,6 +208,14 @@ describe('OrderFeature', () => {
     );
   };
 
+  const mockStockReserved = (
+    code = ReserveStockCode.RESERVE_SUCCESS,
+  ) => {
+    inventoryService.reserveStock.mockResolvedValue({
+      code,
+    });
+  };
+
   const getPromotionStateMessage = (
     isEnabled: boolean,
     startAt: Date,
@@ -229,11 +254,19 @@ describe('OrderFeature', () => {
       getPromotion: vi.fn<PromotionRepositoryInterface['getPromotion']>(),
     };
 
+    inventoryService = {
+      reserveStock: vi.fn<InventoryServiceInterface['reserveStock']>(),
+    };
+
+    // Default behavior for existing successful order tests.
+    mockStockReserved();
+
     feature = new OrderFeature(
       idGenerator as unknown as IdGeneratorInterface,
       orderRepo as unknown as OrderRepositoryInterface,
       productRepo as unknown as ProductRepositoryInterface,
       promotionRepo as unknown as PromotionRepositoryInterface,
+      inventoryService as unknown as InventoryServiceInterface,
     );
   });
 
@@ -763,6 +796,161 @@ describe('OrderFeature', () => {
           expect(result.order).toBeUndefined();
         });
       });
+
+      describe('when inventory reservation succeeds', () => {
+        beforeEach(() => {
+          mockProductFound();
+          mockIdsGenerated();
+          mockStockReserved();
+        });
+
+        it('should reserve stock using the correct parameters', async () => {
+          await feature.placeOrder(validParam);
+
+          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
+            inventory_key: `inventory:${validParam.item_id}`,
+            identifier_key: `order:${validParam.item_id}`,
+            identifier_id: validParam.email,
+            identifier_limit: '1',
+          });
+        });
+
+        it('should continue to order creation', async () => {
+          mockOrderCreated();
+
+          await feature.placeOrder(validParam);
+
+          expect(orderRepo.createOrder).toHaveBeenCalledTimes(1);
+        });
+
+        it('should normalize email before reserving stock', async () => {
+          mockOrderCreated();
+
+          await feature.placeOrder({
+            ...validParam,
+            email: 'CUSTOMER@EXAMPLE.COM',
+          });
+
+          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({
+              identifier_id: 'customer@example.com',
+            }),
+          );
+        });
+      });
+
+      describe('when inventory is out of stock', () => {
+        it('should return VALIDATION_INVALID_STATE', async () => {
+          mockProductFound();
+          mockIdsGenerated();
+
+          mockStockReserved(ReserveStockCode.RESERVE_OUT_OF_STOCK);
+
+          const result = await feature.placeOrder(validParam);
+
+          expect(result).toEqual({
+            status: new Status(
+              StatusCode.VALIDATION_INVALID_STATE,
+              'insufficient product stock',
+            ),
+          });
+
+          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
+            inventory_key: `inventory:${validParam.item_id}`,
+            identifier_key: `order:${validParam.item_id}`,
+            identifier_id: validParam.email,
+            identifier_limit: '1',
+          });
+
+          expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('when identifier purchase limit is reached', () => {
+        it('should return VALIDATION_INVALID_STATE', async () => {
+          mockProductFound();
+          mockIdsGenerated();
+
+          mockStockReserved(ReserveStockCode.RESERVE_LIMIT_REACHED);
+
+          const result = await feature.placeOrder(validParam);
+
+          expect(result).toEqual({
+            status: new Status(
+              StatusCode.VALIDATION_INVALID_STATE,
+              'unable to order more than 1',
+            ),
+          });
+
+          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
+            inventory_key: `inventory:${validParam.item_id}`,
+            identifier_key: `order:${validParam.item_id}`,
+            identifier_id: validParam.email,
+            identifier_limit: '1',
+          });
+
+          expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('when inventory reservation returns an unexpected code', () => {
+        it('should return VALIDATION_INVALID_STATE', async () => {
+          mockProductFound();
+          mockIdsGenerated();
+
+          mockStockReserved(999 as ReserveStockCode);
+
+          const result = await feature.placeOrder(validParam);
+
+          expect(result).toEqual({
+            status: new Status(
+              StatusCode.VALIDATION_INVALID_STATE,
+              'unable to reserve order',
+            ),
+          });
+
+          expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('when an unexpected exception occurs', () => {
+        it('should handle inventory service exceptions', async () => {
+          const error = new Error('Redis connection unavailable');
+
+          mockPromotionFound();
+          mockProductFound();
+          mockIdsGenerated();
+
+          inventoryService.reserveStock.mockRejectedValue(error);
+
+          const result = await feature.placeOrder(validParam);
+
+          expect(result).toEqual({
+            status: Status.fromError(error),
+          });
+
+          expect(inventoryService.reserveStock).toHaveBeenCalledTimes(1);
+          expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        });
+
+        it('should handle non-Error inventory service exceptions', async () => {
+          const error = 'Unexpected inventory reservation error';
+
+          mockPromotionFound();
+          mockProductFound();
+          mockIdsGenerated();
+
+          inventoryService.reserveStock.mockRejectedValue(error);
+
+          const result = await feature.placeOrder(validParam);
+
+          expect(result).toEqual({
+            status: Status.fromError(error),
+          });
+
+          expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        });
+      })
     });
 
     describe('when an unexpected exception occurs', () => {
