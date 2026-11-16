@@ -135,6 +135,16 @@ services:
       - commerce-api
     networks:
       - mysql-net
+  cache:
+    image: redis:8.8.0
+    container_name: cache
+    restart: unless-stopped
+    ports:
+      - "6001:6379"
+    command:
+      - redis-server
+    networks:
+      - mysql-net
 volumes:
   mysql-db-1-data:
   mysql-db-2-data:

@@ -59,7 +59,7 @@ infra-install:
 
 .PHONY: infra-start
 infra-start:
-	docker compose up -d
+	docker compose up -d --build --scale commerce-api=3
 
 .PHONY: infra-stop
 infra-stop:
