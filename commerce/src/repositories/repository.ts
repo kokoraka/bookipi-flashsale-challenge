@@ -5,7 +5,7 @@ export const REPOSITORY_ORDER_TOKEN = Symbol('REPOSITORY_ORDER_TOKEN');
 export const REPOSITORY_PROMOTION_TOKEN = Symbol('REPOSITORY_PROMOTION_TOKEN');
 
 export interface ProductRepositoryInterface {
-  getProduct(p: GetProductParam): Promise<GetProductResult>
+  getProduct(p: GetProductParam, opt?: QueryOption): Promise<GetProductResult>
 }
 
 export type GetProductParam = {
@@ -131,4 +131,11 @@ type FileObject = ProvidedObject & {
 type File = {
   id?: string
   public_url?: string
+}
+
+export type QueryOption = {
+  readCache?: boolean
+  writeCache?: boolean
+  cachePrefix?: string
+  cacheTtl?: number
 }

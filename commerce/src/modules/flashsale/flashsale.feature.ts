@@ -63,6 +63,11 @@ export class FlashSaleFeature implements FlashSaleFeatureInterface {
     try {
       return await this.productRepo.getProduct({
         unique_id: p.unique_id,
+      }, {
+        readCache: true,
+        writeCache: true,
+        cachePrefix: `flashsale-product`,
+        cacheTtl: 180_000
       });
     } catch (e: unknown) {
       return {
