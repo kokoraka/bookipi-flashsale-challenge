@@ -16,7 +16,7 @@ export class GetFlashsaleProductByIdInventory {
     /**
     * decimal
     */
-    'available_quantity': string;
+    'estimate_available_quantity': string;
 
     static readonly discriminator: string | undefined = undefined;
 
@@ -24,8 +24,8 @@ export class GetFlashsaleProductByIdInventory {
 
     static readonly attributeTypeMap: Array<{name: string, baseName: string, type: string, format: string}> = [
         {
-            "name": "available_quantity",
-            "baseName": "available_quantity",
+            "name": "estimate_available_quantity",
+            "baseName": "estimate_available_quantity",
             "type": "string",
             "format": "decimal"
         }    ];
