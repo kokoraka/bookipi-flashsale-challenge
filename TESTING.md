@@ -34,12 +34,25 @@ Found p95 spike on attempt 3
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | not ok | 0% | 1.17s | 4s | 2.2s | 1470.99 | 15.75% | 202.92MB |
 | 2 | ok | 0% | 25.19ms | 352.85ms | 162.19ms | 3103.78 | 19.83% | 142.71MB |
+| 3 | ok | 0% | 289.37µs | 44.04ms | 1.02ms | 3185.39 | 6.05% | 118.34MB |
 
 p95 still below 300ms on attempt 2, i'd like to focus on place order implementation first for now
 
+3. Stress Testing 2m30s Load up-to 10K VU, down to 0 in 20s
+
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | ok | 0% | 977.47µs | 97.67ms | 2.01ms | 6366.51 | 18.92% | 126.13MB |
+
+4. Stress Testing 2m30s Load up-to 100K VU, down to 0 in 20s
+
+| attempt | result | req failed | avg duration | max duration| p95(<300ms) | rps | avg node cpu usage | avg node ram usage |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | not ok | 12.63% | 447.76ms | 26.61s | p(95)=1.92s | 4321.45 | 22.19% | 136.29MB |
+
 #### Optimization Attempt
 
-1. Database Bottleneck detected
+1. Single Database bottleneck detected
 
 during stress test attempt 1, p95 hit 2.2s which reached the threshold 300ms
 
@@ -53,6 +66,16 @@ i added 2 database replica syncing to 1 primary database, and put 3 of them behi
 the result is attempt 2, p95 reduced to `162.19ms` and rps increased to `3103.78`
 
 it's seems the default database config did not allow us to run with performance mode, there is room for tweaking the database, but for now let's assume it's the max resource we can get by using the default config.
+
+2. Multiple Database still slow
+
+after i added the database replica on optimization 1, this time i introduce caching layer to reduce the p95 and increase the rps.
+i use in-memory caching on stress testing attempt 3 and able to reduce p95 to `289.37µs` but rps remain roughly the same `3185.39`, maybe because i'm using the same test scenario.
+the reason i use in-memory caching because i wanted to keep it simple first.
+now since i'm caching the response, i need to be able to invalidate the cache on certain resource (e.g: product.inventory.estimate_available_quantity).
+
+i doubled the amount of VU on test 3 with 10K VU to test whether i can get more throughput or not, the result i doubled the rps but the avg, max, and rps were also doubled (still ok).
+i runn another stress test 4 with 100K VU, the api is still running but cannot response successfully, `ECONREFUSED`, `dial tcp 127.0.0.1:4001: connectex: No connection could be made because the target machine actively refused it.`, so based on this test we can't achive 100K VU with only 1 instance of the service running.
 
 ### Place Order API
 
