@@ -34,7 +34,7 @@ type GetProductInventory = {
 
 export interface OrderRepositoryInterface {
   createOrder(p: CreateOrderParam): Promise<CreateOrderResult>
-  getOrder(p: GetOrderParam): Promise<GetOrderResult>
+  getOrder(p: GetOrderParam, opt?: QueryOption): Promise<GetOrderResult>
 }
 
 export type CreateOrderParam = {

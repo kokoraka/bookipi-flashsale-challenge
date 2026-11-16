@@ -8,7 +8,7 @@ import type {
 } from './order.feature.js';
 import { Status, StatusCode } from '../../entities/status/index.js';
 import { OrderStatus } from '../../entities/order/OrderStatus.js';
-import { Promotion, PromotionState } from '../../entities/promotion/Promotion.js';
+import { Promotion } from '../../entities/promotion/Promotion.js';
 import type { IdGeneratorInterface } from '../../services/idgen.service.js';
 import type {
   OrderRepositoryInterface,
@@ -230,7 +230,6 @@ describe('OrderFeature', () => {
     };
 
     feature = new OrderFeature(
-      configService as unknown as ConfigService,
       idGenerator as unknown as IdGeneratorInterface,
       orderRepo as unknown as OrderRepositoryInterface,
       productRepo as unknown as ProductRepositoryInterface,
@@ -859,6 +858,10 @@ describe('OrderFeature', () => {
 
         expect(orderRepo.getOrder).toHaveBeenCalledExactlyOnceWith({
           unique_id: validGetOrderParam.unique_id,
+        }, {
+          readCache: true,
+          writeCache: true,
+          cachePrefix: `order-detail`,
         });
       });
 

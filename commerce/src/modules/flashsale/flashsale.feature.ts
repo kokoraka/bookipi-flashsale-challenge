@@ -66,7 +66,7 @@ export class FlashSaleFeature implements FlashSaleFeatureInterface {
       }, {
         readCache: true,
         writeCache: true,
-        cachePrefix: `flashsale-product`,
+        cachePrefix: `flashsale-product-detail`,
         cacheTtl: 180_000
       });
     } catch (e: unknown) {

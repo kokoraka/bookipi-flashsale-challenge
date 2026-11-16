@@ -73,6 +73,11 @@ describe('FlashSaleFeature', () => {
         expect(productRepo.getProduct).toHaveBeenCalledTimes(1);
         expect(productRepo.getProduct).toHaveBeenCalledWith({
           unique_id: param.unique_id,
+        }, {
+          readCache: true,
+          writeCache: true,
+          cachePrefix: `flashsale-product-detail`,
+          cacheTtl: 180_000
         });
         expect(result).toBe(expected);
       });
