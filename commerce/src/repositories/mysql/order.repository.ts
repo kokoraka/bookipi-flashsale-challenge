@@ -153,18 +153,19 @@ export class OrderRepository implements OrderRepositoryInterface {
       if (readCache) {
         const cachedValue = await this.repoCache.get<Order>(lookupKey)
         if (cachedValue) {
+          const order = Object.assign(new Order(), cachedValue)
           return {
             status: new Status(StatusCode.SUCCESS, 'success get order'),
             order: {
-              unique_id: cachedValue.unique_id,
-              buyer_email: cachedValue.buyer_email,
-              buyer_name: cachedValue.buyer_name,
-              status: cachedValue.status,
-              grand_total: cachedValue.grand_total,
-              placed_at: cachedValue.placed_at,
-              created_at: cachedValue.created_at,
-              updated_at: cachedValue.updated_at,
-              items: cachedValue.items.map((item) => {
+              unique_id: order.unique_id,
+              buyer_email: order.buyer_email,
+              buyer_name: order.buyer_name,
+              status: order.status,
+              grand_total: order.grand_total,
+              placed_at: new Date(order.placed_at),
+              created_at: new Date(order.created_at),
+              updated_at: order.updated_at ? new Date(order.updated_at) : undefined,
+              items: order.items.map((item) => {
                 return {
                   unique_id: item.unique_id,
                   name: item.name,
@@ -184,8 +185,11 @@ export class OrderRepository implements OrderRepositoryInterface {
         .select([
           'orders.id',
           'orders.unique_id',
+          'orders.idempotency_key',
           'orders.buyer_email',
           'orders.buyer_name',
+          'orders.buyer_snapshot',
+          'orders.promotion_key',
           'orders.status',
           'orders.grand_total',
           'orders.placed_at',
@@ -193,12 +197,14 @@ export class OrderRepository implements OrderRepositoryInterface {
           'orders.updated_at',
 
           'orderItems.id',
+          'orderItems.order_id',
           'orderItems.unique_id',
           'orderItems.name',
           'orderItems.description',
-          'orderItems.product_id',
           'orderItems.quantity',
           'orderItems.unit_price',
+          'orderItems.product_id',
+          'orderItems.product_snapshot',
           'orderItems.created_at',
           'orderItems.updated_at',
         ])

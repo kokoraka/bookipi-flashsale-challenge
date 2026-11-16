@@ -20,7 +20,7 @@ export class ProductRepository implements ProductRepositoryInterface {
   constructor(
     @Inject(CACHE_MANAGER) private repoCache: Cache,
     @InjectDataSource('secondary')
-    private readonly secondarySource: DataSource
+    private readonly secondarySource: DataSource,
   ) { }
 
   async getProduct(p: GetProductParam, opts?: QueryOption): Promise<GetProductResult> {
@@ -36,19 +36,20 @@ export class ProductRepository implements ProductRepositoryInterface {
       if (readCache) {
         const cachedValue = await this.repoCache.get<Product>(lookupKey)
         if (cachedValue) {
+          const product = Object.assign(new Product(), cachedValue)
           return {
             status: new Status(StatusCode.SUCCESS, 'success get product'),
             product: {
-              unique_id: cachedValue.unique_id,
-              name: cachedValue.name,
-              description: cachedValue.description,
-              selling_price: cachedValue.selling_price,
-              thumbnail: cachedValue.thumbnail,
-              created_at: cachedValue.created_at,
-              updated_at: cachedValue.updated_at,
+              unique_id: product.unique_id,
+              name: product.name,
+              description: product.description,
+              selling_price: product.selling_price,
+              thumbnail: product.thumbnail,
+              created_at: new Date(product.created_at),
+              updated_at: product.updated_at ? new Date(product.updated_at) : undefined,
             },
             inventory: {
-              available_quantity: cachedValue.available_quantity,
+              available_quantity: product.available_quantity,
             }
           };
         }
@@ -57,6 +58,7 @@ export class ProductRepository implements ProductRepositoryInterface {
       const product = await this.secondarySource.getRepository(Product)
         .createQueryBuilder('products')
         .select([
+          'products.id',
           'products.unique_id',
           'products.name',
           'products.description',
