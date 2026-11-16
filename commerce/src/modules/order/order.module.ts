@@ -4,12 +4,14 @@ import { SERVICE_ID_GENERATOR, UuidGeneratorService } from '../../services/idgen
 import { OrderRepositoryModule, ProductRepositoryModule, PromotionRepositoryModule } from '../../repositories/mysql/index.js'
 import { OrderFeature } from './order.feature.js'
 import { OrderController as RestOrderController } from './order.restcontroller.js'
+import { InventoryModule } from '../../services/inventory.module.js';
 
 @Module({
   imports: [
     OrderRepositoryModule,
     ProductRepositoryModule,
     PromotionRepositoryModule,
+    InventoryModule,
   ],
   providers: [
     {
