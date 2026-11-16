@@ -31,7 +31,7 @@ test-coverage:
 .PHONY: test-performance
 test-performance: 
 	make monitor-process-window-background
-	k6 run --scenario spike test/order.performance-spec.ts
+	k6 run --scenario stress3 test/product.performance-spec.ts
 
 .PHONY: test-analyze
 test-analyze:
@@ -46,7 +46,11 @@ analyze-sonar:
 monitor-process-window-background: 
 # window script
 	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-service.ps1' -WindowStyle Minimized"
-	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-database.ps1' -WindowStyle Minimized"
+
+.PHONY: monitor-connection-window
+monitor-connection-window: 
+# window script
+	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-connection.ps1'"
 
 .PHONY: infra-install
 infra-install:
