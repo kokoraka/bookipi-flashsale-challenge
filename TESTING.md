@@ -138,7 +138,7 @@ Testing held by running the performance test script, the result is collected thr
 
 5K qty, There's no over-sell, found p95 spike on attempt 1.
 5K qty, There's no over-sell, rps and avg improved on attempt 4 (queue)
-200K qty, order placed 142025 (test ended) on attempt 5 (queue)
+200K qty, order placed 142025 there's no over-sell (test ended) on attempt 5 (queue)
 
 #### Optimization Attempt
 
