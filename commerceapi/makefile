@@ -29,9 +29,15 @@ generate-openapi-commerce:
 		--global-property=models,supportingFiles \
 		--additional-properties=platform=node,modelPropertyNaming=snake_case,supportsES6=true,importFileExtension=.js,typescriptMajorVersion=5
 
+.PHONY: generate-openapi-frontend
+generate-openapi-frontend:
+	make generate-swagger
+	cd ../frontend && make generate
+
 .PHONY: generate-openapi
 generate-openapi:
 	make generate-openapi-commerce
+	make generate-openapi-frontend
 
 .PHONY: build-openapi
 build-openapi:
