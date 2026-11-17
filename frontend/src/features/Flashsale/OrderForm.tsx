@@ -3,7 +3,7 @@ import { Button } from "../../components/Button"
 import { RowGroup } from "../../components/Form"
 import { InputText } from "../../components/Input"
 
-type OrderFormData = {
+export type OrderFormData = {
   email: string
   name: string
 }
