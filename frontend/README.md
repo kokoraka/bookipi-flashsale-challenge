@@ -2,9 +2,9 @@
 
 ## Todos
 
-1. add place order implementation
-2. add get order implementation
-3. Replace yup validator with zustand
+1. add get order implementation
+2. remove unused things
+3. run linter
 
 ## Nice to Have
 

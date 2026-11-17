@@ -1,5 +1,6 @@
 import * as React from "react"
 import { FaRegFrown } from "react-icons/fa";
+import * as z from "zod";
 import { Button } from "../components/Button"
 import { Container } from "../components/Container"
 import { Card } from "../components/Card"
@@ -7,22 +8,28 @@ import { useConfig } from "../components/Config"
 import { Meta } from "../components/Meta"
 import { Spinner } from "../components/Spinner"
 import { PromotionState, PromotionView } from "../features/Promotion"
-import { useGetFlashsalePromotionById, useGetFlashsaleProductById } from "../services/react"
+import { useGetFlashsalePromotionById, useGetFlashsaleProductById, usePlaceOrder } from "../services/react"
 import { ProductView } from "../features/Product"
-import { OrderForm, ProductCard, PromotionAlert } from "../features/Flashsale";
+import { OrderForm, OrderFormData, ProductCard, PromotionAlert } from "../features/Flashsale";
+import { useToast } from "../components/Toast";
+import { Status, StatusCode } from "../status";
+import { generateIds } from "../services/text/idgen";
 
 const defaultOrderForm = {
   email: "",
   name: "",
-  quantity: "1",
 }
+
+const DEFAULT_QUANTITY = "1"
 
 export default function Home(): React.JSX.Element {
   const config = useConfig()
   const promotionId = config.getString('VITE_PROMOTION_ID')
   const productId = config.getString('VITE_PRODUCT_ID')
+  const toast = useToast()
 
   const [orderForm, setOrderForm] = React.useState(defaultOrderForm)
+  const [orderFormLoading, setOrderFormLoading] = React.useState(false)
 
   const {
     data: promotionData,
@@ -36,6 +43,10 @@ export default function Home(): React.JSX.Element {
     isPending: isGetProductPending,
     execute: getProduct
   } = useGetFlashsaleProductById()
+
+  const {
+    execute: placeOrder
+  } = usePlaceOrder()
 
   React.useEffect(() => {
     if (!promotionId) {
@@ -76,6 +87,70 @@ export default function Home(): React.JSX.Element {
       thumbnail_url: productData.product.thumbnail?.file.public_url,
     })
   }, [productData])
+
+  async function handleOrderSubmit(data: OrderFormData) {
+    try {
+      const validationRule = z.object({
+        name: z.string().trim().min(1).max(128),
+        email: z.email().trim().min(3).max(188).toLowerCase(),
+      });
+      const validateRes = await validationRule.safeParseAsync({
+        email: data.email,
+        name: data.name,
+      });
+      if (!validateRes.success) {
+        const messages = validateRes.error.issues.map((issue) => `${issue.path}: ${issue.message}`)
+        toast.warn(<>
+          There's invalid information: <br />
+          {messages.join('\n')}
+        </>)
+        return
+      }
+
+      const generateRes = generateIds(1)
+      if (!generateRes.status.is(StatusCode.SUCCESS) || !generateRes.ids) {
+        toast.error(<>
+          Failed processing request <br />
+          Please try again
+        </>)
+        return
+      }
+
+      const idempotencyKey = generateRes.ids[0].text
+
+      setOrderFormLoading(true)
+      const placeRes = await placeOrder({
+        email: validateRes.data.email,
+        name: validateRes.data.name,
+        item_id: productId,
+        promotion_id: promotionId,
+        quantity: DEFAULT_QUANTITY
+      }, {
+        headers: {
+          'Idempotency-Key': idempotencyKey
+        }
+      })
+      setOrderFormLoading(false)
+      const placeStat = Status.fromObjectAlways(placeRes)
+      if (!placeStat.is(StatusCode.SUCCESS)) {
+        switch (placeStat.code) {
+          case
+            StatusCode.VALIDATION_INVALID_PARAM,
+            StatusCode.VALIDATION_INVALID_STATE:
+            toast.warn(placeStat.message)
+            break
+          default:
+            toast.error(placeStat.message)
+        }
+        return
+      }
+
+      toast.success(`Success place order`)
+    } catch (e: unknown) {
+      const err = e as Error
+      toast.error(`Unexpected error: ${err.message}`)
+    }
+  }
 
   return (
     <>
@@ -153,7 +228,6 @@ export default function Home(): React.JSX.Element {
                       </div>
                       <div className="col-span-12 sm:col-span-7">
                         <OrderForm
-
                           data={orderForm}
                           onChange={(data) => {
                             setOrderForm((prevState) => ({
@@ -161,11 +235,11 @@ export default function Home(): React.JSX.Element {
                               ...data,
                             }))
                           }}
-                          onSubmit={(data) => {
-                            console.log(data)
-                            alert("TODO: SUBMIT")
-                          }}
-                          disabled={productView && !productView.hasStock()}
+                          onSubmit={handleOrderSubmit}
+                          disabled={
+                            (productView && !productView.hasStock()) ||
+                            orderFormLoading
+                          }
                         />
                       </div>
                     </div>
