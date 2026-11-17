@@ -131,6 +131,7 @@ export class OrderRepository implements OrderRepositoryInterface {
         order: {
           exists: trxRes.exists,
           unique_id: trxRes.order.unique_id,
+          created_at: trxRes.order.created_at,
         }
       };
     } catch (e: unknown) {
