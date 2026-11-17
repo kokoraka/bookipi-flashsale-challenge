@@ -2,24 +2,25 @@ import * as React from "react"
 import { useLocation, useRouteError, isRouteErrorResponse } from "react-router-dom"
 import { Status, StatusCode } from "./../status"
 import { Meta } from "../components/Meta"
+import { ButtonLink } from "../components/Button"
 import { Container } from "../components/Container"
 import { Info } from "../features/Page"
 
 export default function ErrorPage(): React.JSX.Element {
   const [status, setStatus] = React.useState({
-    code: 'ERROR',
-    message: 'General Error'
+    code: 'Unexpected error',
+    message: 'Please try again later'
   })
   const { pathname } = useLocation()
   const error = useRouteError()
 
   React.useEffect(() => {
-    const st = parseStatus(error)
+    const stat = parseError(error)
     setStatus((prevState) => {
       return {
         ...prevState,
-        code: `${st.code}`,
-        message: st.message
+        code: `${stat.code}`,
+        message: stat.message
       }
     })
   }, [error])
@@ -33,17 +34,22 @@ export default function ErrorPage(): React.JSX.Element {
       </Meta>
 
       <Container size="md">
-        <Info
-          title={`${status.code}`}
-          subtitle={status.message}
-          actionText={'Try Again'}
-          actionTo={pathname} />
+        <div className="h-screen flex flex-col gap-4 md:gap-8 justify-center items-center">
+          <Info
+            title={`${status.code}`}
+            subtitle={status.message} />
+          <div className="flex flex-col justify-center items-center">
+            <ButtonLink to={pathname}>
+              Try Again
+            </ButtonLink>
+          </div>
+        </div>
       </Container>
     </>
   )
 }
 
-function parseStatus(error: unknown): Status {
+function parseError(error: unknown): Status {
   if (error instanceof Status) {
     return error
   } else if (error instanceof Error) {
