@@ -100,9 +100,18 @@ export default function Home(): React.JSX.Element {
                               }}
                             </Alert>
                             :
-                            <Info
-                              title={`Promotion unavailable`}
-                              subtitle={`Are you looking for something?`} />
+                            <div className="h-screen flex flex-col gap-4 md:gap-8 justify-center items-center">
+                              <Info
+                                title={'Promotion unavailable'}
+                                subtitle={'Are you looking for something?'} />
+                              <div className="flex flex-col justify-center items-center">
+                                <Button onClick={() => {
+                                  getPromotion([promotionId])
+                                }}>
+                                  Try again
+                                </Button>
+                              </div>
+                            </div>
                         )
                     )
                 }
