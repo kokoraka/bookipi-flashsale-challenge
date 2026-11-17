@@ -34,8 +34,6 @@ responses:
             $ref: "./example_success.yml"
   "400":
     $ref: "./../../main.yml#/components/responses/BadRequest"
-  "401":
-    $ref: "./../../main.yml#/components/responses/UnauthenticatedAccess"
   "409":
     $ref: "./../../main.yml#/components/responses/Conflict"
   "500":

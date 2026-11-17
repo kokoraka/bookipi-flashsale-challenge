@@ -34,8 +34,7 @@ import type {
   NotFoundResponse,
   PlaceOrderRequest,
   PlaceOrderResponse,
-  ServerErrorResponse,
-  UnauthenticatedAccessResponse
+  ServerErrorResponse
 } from './.';
 
 import {
@@ -358,7 +357,7 @@ export const placeOrder = (
 
 
 
-export const getPlaceOrderMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthenticatedAccessResponse | ConflictResponse | ServerErrorResponse>,
+export const getPlaceOrderMutationOptions = <TError = ErrorType<BadRequestResponse | ConflictResponse | ServerErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof placeOrder>>, TError,{data: BodyType<PlaceOrderRequest>}, TContext>, request?: SecondParameter<typeof axiosMutator>}
 ): UseMutationOptions<Awaited<ReturnType<typeof placeOrder>>, TError,{data: BodyType<PlaceOrderRequest>}, TContext> => {
 
@@ -387,12 +386,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PlaceOrderMutationResult = NonNullable<Awaited<ReturnType<typeof placeOrder>>>
     export type PlaceOrderMutationBody = BodyType<PlaceOrderRequest>
-    export type PlaceOrderMutationError = ErrorType<BadRequestResponse | UnauthenticatedAccessResponse | ConflictResponse | ServerErrorResponse>
+    export type PlaceOrderMutationError = ErrorType<BadRequestResponse | ConflictResponse | ServerErrorResponse>
 
     /**
  * @summary place order
  */
-export const usePlaceOrder = <TError = ErrorType<BadRequestResponse | UnauthenticatedAccessResponse | ConflictResponse | ServerErrorResponse>,
+export const usePlaceOrder = <TError = ErrorType<BadRequestResponse | ConflictResponse | ServerErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof placeOrder>>, TError,{data: BodyType<PlaceOrderRequest>}, TContext>, request?: SecondParameter<typeof axiosMutator>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof placeOrder>>,
