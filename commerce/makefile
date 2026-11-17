@@ -30,7 +30,6 @@ test-coverage:
 
 .PHONY: test-performance
 test-performance: 
-	make monitor-process-window-background
 	k6 run --scenario spike test/order.performance-spec.ts
 
 .PHONY: test-analyze
@@ -59,6 +58,7 @@ infra-install:
 
 .PHONY: infra-start
 infra-start:
+	npm run build
 	docker compose up -d --build --scale commerce-api=3
 
 .PHONY: infra-stop
