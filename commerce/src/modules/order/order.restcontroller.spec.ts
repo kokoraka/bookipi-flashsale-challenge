@@ -21,6 +21,7 @@ describe('OrderController', () => {
   };
 
   let response: Response;
+  let responseStatus: ReturnType<typeof vi.fn>;
 
   const createPlaceOrderResult = (
     result: Partial<PlaceOrderResult>,
@@ -79,8 +80,10 @@ describe('OrderController', () => {
       orderFeature as unknown as OrderFeature,
     );
 
+    responseStatus = vi.fn().mockReturnThis();
+
     response = {
-      status: vi.fn().mockReturnThis(),
+      status: responseStatus,
     } as unknown as Response;
   });
 
@@ -112,7 +115,7 @@ describe('OrderController', () => {
           promotion_id: request.promotion_id,
         });
 
-        expect(response.status).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
+        expect(responseStatus).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
 
         expect(result).toEqual({
           status: {
@@ -146,7 +149,7 @@ describe('OrderController', () => {
           idempotencyKey,
         );
 
-        expect(response.status).toHaveBeenCalledWith(HttpStatus.OK);
+        expect(responseStatus).toHaveBeenCalledWith(HttpStatus.OK);
 
         expect(result.data?.order.unique_id).toBe('order-123');
       });
@@ -169,7 +172,7 @@ describe('OrderController', () => {
           idempotencyKey,
         );
 
-        expect(response.status).toHaveBeenCalledWith(
+        expect(responseStatus).toHaveBeenCalledWith(
           HttpStatus.BAD_REQUEST,
         );
 
@@ -201,7 +204,7 @@ describe('OrderController', () => {
           idempotencyKey,
         );
 
-        expect(response.status).toHaveBeenCalledWith(
+        expect(responseStatus).toHaveBeenCalledWith(
           HttpStatus.CONFLICT,
         );
 
@@ -233,7 +236,7 @@ describe('OrderController', () => {
           idempotencyKey,
         );
 
-        expect(response.status).toHaveBeenCalledWith(
+        expect(responseStatus).toHaveBeenCalledWith(
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
@@ -261,7 +264,7 @@ describe('OrderController', () => {
           idempotencyKey,
         );
 
-        expect(response.status).toHaveBeenCalledWith(
+        expect(responseStatus).toHaveBeenCalledWith(
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
@@ -329,7 +332,7 @@ describe('OrderController', () => {
       it('should return OK', async () => {
         await controller.getOrder(orderId, response);
 
-        expect(response.status).toHaveBeenCalledExactlyOnceWith(
+        expect(responseStatus).toHaveBeenCalledExactlyOnceWith(
           HttpStatus.OK,
         );
       });
@@ -463,7 +466,7 @@ describe('OrderController', () => {
           unique_id: orderId,
         });
 
-        expect(response.status).toHaveBeenCalledExactlyOnceWith(
+        expect(responseStatus).toHaveBeenCalledExactlyOnceWith(
           HttpStatus.NOT_FOUND,
         );
 
@@ -494,7 +497,7 @@ describe('OrderController', () => {
 
         const result = await controller.getOrder(orderId, response);
 
-        expect(response.status).toHaveBeenCalledExactlyOnceWith(
+        expect(responseStatus).toHaveBeenCalledExactlyOnceWith(
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
@@ -520,7 +523,7 @@ describe('OrderController', () => {
 
         const result = await controller.getOrder(orderId, response);
 
-        expect(response.status).toHaveBeenCalledExactlyOnceWith(
+        expect(responseStatus).toHaveBeenCalledExactlyOnceWith(
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
