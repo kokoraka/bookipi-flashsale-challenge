@@ -9,7 +9,7 @@ type GenerateIdResult = {
 
 type Id = {
   text: string
-  binary: Buffer<ArrayBuffer>
+  binary: Buffer
 }
 
 export function generateIds(n: number): GenerateIdResult {

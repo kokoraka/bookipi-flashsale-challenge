@@ -1,13 +1,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { dateFormat, isSameDay } from '../../typeconv/date'
+import { dateFormat, isSameDay } from '../../services/date/date'
 import {
   PROMOTION_LABEL,
   PromotionState,
   PromotionView,
 } from './Promotion'
 
-vi.mock('../../typeconv/date', () => ({
+vi.mock('../../services/date/date', () => ({
   dateFormat: vi.fn(),
   isSameDay: vi.fn(),
 }))

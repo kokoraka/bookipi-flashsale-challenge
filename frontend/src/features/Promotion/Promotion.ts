@@ -1,4 +1,4 @@
-import { dateFormat, isSameDay } from "../../typeconv/date"
+import { dateFormat, isSameDay } from "../../services/date/date"
 
 export enum PromotionState {
   INVALID = 'invalid',
