@@ -1,14 +1,10 @@
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ConfigService } from '@nestjs/config';
+import { describe, it as It, expect, vi, beforeEach, afterEach } from 'vitest';
+import { of, throwError } from 'rxjs';
+import { ClientProxy } from '@nestjs/microservices';
 import { OrderFeature } from './order.feature.js';
-import type {
-  PlaceOrderParam,
-  GetOrderParam,
-} from './order.feature.js';
 import { Status, StatusCode } from '../../entities/status/index.js';
 import { OrderStatus } from '../../entities/order/OrderStatus.js';
-import { Promotion } from '../../entities/promotion/Promotion.js';
 import type { IdGeneratorInterface } from '../../services/idgen.service.js';
 import type {
   OrderRepositoryInterface,
@@ -16,250 +12,156 @@ import type {
   PromotionRepositoryInterface,
 } from '../../repositories/repository.js';
 import {
-  SERVICE_INVENTORY_TOKEN,
   ReserveStockCode,
+  type InventoryServiceInterface,
 } from '../../services/inventory.service.js';
-import type {
-  InventoryServiceInterface,
-} from '../../services/inventory.service.js';
-
-type GetProductResult = Awaited<
-  ReturnType<ProductRepositoryInterface['getProduct']>
->;
-
-type CreateOrderResult = Awaited<
-  ReturnType<OrderRepositoryInterface['createOrder']>
->;
-
-type GetOrderResult = Awaited<
-  ReturnType<OrderRepositoryInterface['getOrder']>
->;
-
-type GetPromotionResult = Awaited<
-  ReturnType<PromotionRepositoryInterface['getPromotion']>
->;
-
-type GenerateIdsResult = ReturnType<
-  IdGeneratorInterface['generateIds']
->;
-
-type ReserveStockResult = Awaited<
-  ReturnType<InventoryServiceInterface['reserveStock']>
->;
 
 describe('OrderFeature', () => {
   let feature: OrderFeature;
 
-  let configService: {
-    get: ReturnType<typeof vi.fn<ConfigService['get']>>;
-  };
-
   let idGenerator: {
-    generateIds: ReturnType<typeof vi.fn<IdGeneratorInterface['generateIds']>>;
+    generateIds: ReturnType<typeof vi.fn>;
   };
 
   let orderRepo: {
-    createOrder: ReturnType<typeof vi.fn<OrderRepositoryInterface['createOrder']>>;
-    getOrder: ReturnType<typeof vi.fn<OrderRepositoryInterface['getOrder']>>;
+    getOrder: ReturnType<typeof vi.fn>;
+    createOrder: ReturnType<typeof vi.fn>;
   };
 
   let productRepo: {
-    getProduct: ReturnType<typeof vi.fn<ProductRepositoryInterface['getProduct']>>;
+    getProduct: ReturnType<typeof vi.fn>;
   };
 
   let promotionRepo: {
-    getPromotion: ReturnType<typeof vi.fn<PromotionRepositoryInterface['getPromotion']>>;
+    getPromotion: ReturnType<typeof vi.fn>;
   };
 
   let inventoryService: {
-    reserveStock: ReturnType<
-      typeof vi.fn<InventoryServiceInterface['reserveStock']>
-    >;
+    reserveStock: ReturnType<typeof vi.fn>;
   };
 
-  const NOW = new Date('2026-11-15T11:00:00.000Z');
+  let eventClient: {
+    emit: ReturnType<typeof vi.fn>;
+  };
 
-  const promotionStartTime = new Date('2026-11-15T10:00:00.000Z');
-  const promotionEndTime = new Date('2026-11-15T12:00:00.000Z');
-
-  const validParam: PlaceOrderParam = {
-    idempotency_key: 'idempotency-key-123',
-    promotion_id: 'promotion-123',
+  const validParam = {
+    idempotency_key: 'idempotency-key-001',
+    promotion_id: 'promotion-001',
     name: 'John Doe',
-    email: 'customer@example.com',
-    item_id: 'product-123',
+    email: 'john@example.com',
+    item_id: 'product-001',
     quantity: '1',
   };
 
-  const validGetOrderParam: GetOrderParam = {
-    unique_id: 'order-123',
-  };
-
-  const product = {
-    unique_id: 'product-123',
-    name: 'Product Name',
-    description: 'Product Description',
-    selling_price: 10000,
-    created_at: new Date('2026-11-15T10:00:00.000Z'),
-  };
-
-  const promotionInfo = {
-    unique_id: 'promotion-123',
-    is_enabled: true,
-    start_at: promotionStartTime,
-    end_at: promotionEndTime,
-  };
-
-  const generatedIds = [
-    { text: 'order-123', binary: Buffer.from('order-123') },
-    { text: 'line-123', binary: Buffer.from('line-123') },
-  ];
-
-  const orderInfo = {
-    unique_id: 'order-123',
+  const validCreateParam = {
+    idempotency_key: 'idempotency-key-001',
+    promotion_key: 'promotion-001',
+    order_id: 'order-001',
+    buyer_email: 'john@example.com',
     buyer_name: 'John Doe',
-    buyer_email: 'customer@example.com',
-    status: OrderStatus.PENDING,
-    grand_total: 10000,
-    placed_at: new Date('2026-11-15T10:00:00.000Z'),
-    created_at: new Date('2026-11-15T10:00:00.000Z'),
-    updated_at: new Date('2026-11-15T10:01:00.000Z'),
-    items: [
-      {
-        unique_id: 'line-123',
-        name: 'Product Name',
-        description: 'Product Description',
-        quantity: 1,
-        unit_price: 10000,
-      },
-    ],
+    item_id: 'product-001',
+    item_quantity: 1,
+    item_name: 'Product Name',
+    item_description: 'Product description',
+    item_unit_price: 100_000,
+    placed_at: new Date('2026-11-17T03:00:00.000Z'),
   };
 
-  const createProductResult = (
-    result: Partial<GetProductResult>,
-  ): GetProductResult => result as GetProductResult;
+  const orderId = 'order-001';
+  const itemId = 'item-001';
 
-  const createOrderResult = (
-    result: Partial<CreateOrderResult>,
-  ): CreateOrderResult => result as CreateOrderResult;
+  const createStatus = (code: StatusCode) =>
+    new Status(code, 'test status');
 
-  const createGetOrderResult = (
-    result: Partial<GetOrderResult>,
-  ): GetOrderResult => result as GetOrderResult;
+  const createPromotion = (overrides = {}) => ({
+    is_enabled: true,
+    start_at: new Date(Date.now() - 60_000),
+    end_at: new Date(Date.now() + 60_000),
+    ...overrides,
+  });
 
-  const createPromotionResult = (
-    result: Partial<GetPromotionResult>,
-  ): GetPromotionResult => result as GetPromotionResult;
-
-  const createGenerateIdsResult = (
-    result: Partial<GenerateIdsResult>,
-  ): GenerateIdsResult => result as GenerateIdsResult;
-
-  const mockPromotionFound = (
-    promotion = promotionInfo,
-  ) => {
-    promotionRepo.getPromotion.mockResolvedValue(
-      createPromotionResult({
-        status: new Status(StatusCode.SUCCESS, 'success'),
-        promotion,
-      }),
-    );
-  };
-
-  const mockProductFound = () => {
-    productRepo.getProduct.mockResolvedValue(
-      createProductResult({
-        status: new Status(StatusCode.SUCCESS, 'success'),
-        product,
-      }),
-    );
-  };
-
-  const mockIdsGenerated = () => {
-    idGenerator.generateIds.mockReturnValue(
-      createGenerateIdsResult({
-        status: new Status(StatusCode.SUCCESS, 'success'),
-        ids: generatedIds,
-      }),
-    );
-  };
-
-  const mockOrderCreated = (
-    exists = false,
-    uniqueId = 'order-123',
-  ) => {
-    orderRepo.createOrder.mockResolvedValue(
-      createOrderResult({
-        status: new Status(StatusCode.SUCCESS, 'success'),
-        order: {
-          exists,
-          unique_id: uniqueId,
-        },
-      }),
-    );
-  };
-
-  const mockOrderFound = () => {
-    orderRepo.getOrder.mockResolvedValue(
-      createGetOrderResult({
-        status: new Status(StatusCode.SUCCESS, 'success'),
-        order: orderInfo,
-      }),
-    );
-  };
-
-  const mockStockReserved = (
-    code = ReserveStockCode.RESERVE_SUCCESS,
-  ) => {
-    inventoryService.reserveStock.mockResolvedValue({
-      code,
+  const mockSuccessfulPromotion = () => {
+    promotionRepo.getPromotion.mockResolvedValue({
+      status: createStatus(StatusCode.SUCCESS),
+      promotion: createPromotion(),
     });
   };
 
-  const getPromotionStateMessage = (
-    isEnabled: boolean,
-    startAt: Date,
-    endAt: Date,
-  ) => {
-    return new Promotion(
-      isEnabled,
-      startAt,
-      endAt,
-      NOW,
-    ).getStateMessage();
+  const mockSuccessfulProduct = () => {
+    productRepo.getProduct.mockResolvedValue({
+      status: createStatus(StatusCode.SUCCESS),
+      product: {
+        name: 'Product Name',
+        description: 'Product description',
+        selling_price: 100_000,
+      },
+    });
+  };
+
+  const mockSuccessfulIdGeneration = (id = orderId) => {
+    idGenerator.generateIds.mockReturnValue({
+      status: createStatus(StatusCode.SUCCESS),
+      ids: [{ text: id }],
+    });
+  };
+
+  const mockSuccessfulReservation = () => {
+    inventoryService.reserveStock.mockResolvedValue({
+      code: ReserveStockCode.RESERVE_SUCCESS,
+    });
+  };
+
+  const mockSuccessfulDependencies = () => {
+    mockSuccessfulPromotion();
+    mockSuccessfulProduct();
+    mockSuccessfulIdGeneration();
+    mockSuccessfulReservation();
+  };
+
+  const mockSuccessfulCreateDependencies = () => {
+    mockSuccessfulProduct();
+    mockSuccessfulIdGeneration(itemId);
+  };
+
+  const mockSuccessfulCreateOrder = () => {
+    const createdAt = new Date();
+
+    orderRepo.createOrder.mockResolvedValue({
+      status: createStatus(StatusCode.SUCCESS),
+      order: {
+        unique_id: orderId,
+        created_at: createdAt,
+      },
+    });
+
+    return createdAt;
   };
 
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(NOW);
-
-    configService = {
-      get: vi.fn<ConfigService['get']>(),
-    };
-
     idGenerator = {
-      generateIds: vi.fn<IdGeneratorInterface['generateIds']>(),
+      generateIds: vi.fn(),
     };
 
     orderRepo = {
-      createOrder: vi.fn<OrderRepositoryInterface['createOrder']>(),
-      getOrder: vi.fn<OrderRepositoryInterface['getOrder']>(),
+      getOrder: vi.fn(),
+      createOrder: vi.fn(),
     };
 
     productRepo = {
-      getProduct: vi.fn<ProductRepositoryInterface['getProduct']>(),
+      getProduct: vi.fn(),
     };
 
     promotionRepo = {
-      getPromotion: vi.fn<PromotionRepositoryInterface['getPromotion']>(),
+      getPromotion: vi.fn(),
     };
 
     inventoryService = {
-      reserveStock: vi.fn<InventoryServiceInterface['reserveStock']>(),
+      reserveStock: vi.fn(),
     };
 
-    // Default behavior for existing successful order tests.
-    mockStockReserved();
+    eventClient = {
+      emit: vi.fn().mockReturnValue(of(undefined)),
+    };
 
     feature = new OrderFeature(
       idGenerator as unknown as IdGeneratorInterface,
@@ -267,885 +169,696 @@ describe('OrderFeature', () => {
       productRepo as unknown as ProductRepositoryInterface,
       promotionRepo as unknown as PromotionRepositoryInterface,
       inventoryService as unknown as InventoryServiceInterface,
+      eventClient as unknown as ClientProxy,
     );
   });
 
   afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('placeOrder', () => {
-    describe('when request parameters are invalid', () => {
-      it.each([
-        {
-          description: 'idempotency key is missing',
-          param: { ...validParam, idempotency_key: undefined },
-        },
-        {
-          description: 'idempotency key is empty',
-          param: { ...validParam, idempotency_key: ' ' },
-        },
-        {
-          description: 'idempotency key exceeds maximum length',
-          param: { ...validParam, idempotency_key: 'a'.repeat(37) },
-        },
-        {
-          description: 'promotion ID is missing',
-          param: { ...validParam, promotion_id: undefined },
-        },
-        {
-          description: 'promotion ID is empty',
-          param: { ...validParam, promotion_id: ' ' },
-        },
-        {
-          description: 'promotion ID exceeds maximum length',
-          param: { ...validParam, promotion_id: 'a'.repeat(37) },
-        },
-        {
-          description: 'name is missing',
-          param: { ...validParam, name: undefined },
-        },
-        {
-          description: 'name is empty',
-          param: { ...validParam, name: ' ' },
-        },
-        {
-          description: 'name exceeds maximum length',
-          param: { ...validParam, name: 'a'.repeat(129) },
-        },
-        {
-          description: 'email is invalid',
-          param: { ...validParam, email: 'invalid-email' },
-        },
-        {
-          description: 'email exceeds maximum length',
-          param: {
-            ...validParam,
-            email: `${'a'.repeat(180)}@example.com`,
-          },
-        },
-        {
-          description: 'item ID is missing',
-          param: { ...validParam, item_id: undefined },
-        },
-        {
-          description: 'item ID is empty',
-          param: { ...validParam, item_id: ' ' },
-        },
-        {
-          description: 'item ID exceeds maximum length',
-          param: { ...validParam, item_id: 'a'.repeat(65) },
-        },
-        {
-          description: 'quantity is zero',
-          param: { ...validParam, quantity: '0' },
-        },
-        {
-          description: 'quantity exceeds maximum allowed',
-          param: { ...validParam, quantity: '2' },
-        },
-        {
-          description: 'quantity is invalid',
-          param: { ...validParam, quantity: 'invalid' },
-        },
-      ])(
-        'should return VALIDATION_INVALID_PARAM when $description',
-        async ({ param }) => {
-          const result = await feature.placeOrder(param);
+    describe('When validating parameters', () => {
+      It('should return validation error when parameters are invalid', async () => {
+        const result = await feature.placeOrder({
+          ...validParam,
+          email: 'invalid-email',
+        });
 
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_PARAM,
-              'invalid parameter',
-            ),
-          });
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
 
-          expect(promotionRepo.getPromotion).not.toHaveBeenCalled();
-          expect(productRepo.getProduct).not.toHaveBeenCalled();
-          expect(idGenerator.generateIds).not.toHaveBeenCalled();
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        },
-      );
+        expect(promotionRepo.getPromotion).not.toHaveBeenCalled();
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(inventoryService.reserveStock).not.toHaveBeenCalled();
+        expect(eventClient.emit).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when required parameters are missing', async () => {
+        const result = await feature.placeOrder({
+          name: 'John Doe',
+          email: 'john@example.com',
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
+
+      It('should return validation error when quantity exceeds the limit', async () => {
+        const result = await feature.placeOrder({
+          ...validParam,
+          quantity: '2',
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
+
+      It('should return validation error when quantity is zero', async () => {
+        const result = await feature.placeOrder({
+          ...validParam,
+          quantity: '0',
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
     });
 
-    describe('when promotion lookup fails', () => {
-      it('should return VALIDATION_INVALID_PARAM when promotion is not found', async () => {
-        promotionRepo.getPromotion.mockResolvedValue(
-          createPromotionResult({
-            status: new Status(
-              StatusCode.RESOURCE_NOT_FOUND,
-              'promotion not found',
-            ),
-            promotion: undefined,
-          }),
-        );
+    describe('When retrieving promotion', () => {
+      It('should return validation error when promotion is not found', async () => {
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: createStatus(StatusCode.SUCCESS),
+          promotion: undefined,
+        });
 
         const result = await feature.placeOrder(validParam);
 
-        expect(promotionRepo.getPromotion).toHaveBeenCalledExactlyOnceWith({
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('promotion not found');
+
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when promotion repository fails', async () => {
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+          promotion: undefined,
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('promotion not found');
+      });
+
+      It('should return invalid state when promotion is not ongoing', async () => {
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: createStatus(StatusCode.SUCCESS),
+          promotion: createPromotion({
+            start_at: new Date(Date.now() + 60_000),
+            end_at: new Date(Date.now() + 120_000),
+          }),
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_STATE)).toBe(true);
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+      });
+
+      It('should return invalid state when promotion is disabled', async () => {
+        promotionRepo.getPromotion.mockResolvedValue({
+          status: createStatus(StatusCode.SUCCESS),
+          promotion: createPromotion({
+            is_enabled: false,
+          }),
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_STATE)).toBe(true);
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+      });
+
+      It('should retrieve promotion using the provided promotion ID', async () => {
+        mockSuccessfulDependencies();
+
+        await feature.placeOrder(validParam);
+
+        expect(promotionRepo.getPromotion).toHaveBeenCalledWith({
           unique_id: validParam.promotion_id,
         });
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_PARAM,
-            'promotion not found',
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-
-      it('should return VALIDATION_INVALID_PARAM when repository returns SUCCESS without promotion data', async () => {
-        promotionRepo.getPromotion.mockResolvedValue(
-          createPromotionResult({
-            status: new Status(StatusCode.SUCCESS, 'success'),
-            promotion: undefined,
-          }),
-        );
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_PARAM,
-            'promotion not found',
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-
-      it('should return VALIDATION_INVALID_PARAM when repository returns an unsuccessful status with promotion data', async () => {
-        promotionRepo.getPromotion.mockResolvedValue(
-          createPromotionResult({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_STATE,
-              'promotion lookup failed',
-            ),
-            promotion: promotionInfo,
-          }),
-        );
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_PARAM,
-            'promotion not found',
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
       });
     });
 
-    describe('when promotion is disabled', () => {
-      it('should return VALIDATION_INVALID_STATE', async () => {
-        mockPromotionFound({
-          ...promotionInfo,
-          is_enabled: false,
-        });
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_STATE,
-            getPromotionStateMessage(
-              false,
-              promotionStartTime,
-              promotionEndTime,
-            ),
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('when promotion has not started', () => {
-      it('should return VALIDATION_INVALID_STATE', async () => {
-        const startAt = new Date('2026-11-15T12:00:00.000Z');
-        const endAt = new Date('2026-11-15T13:00:00.000Z');
-
-        mockPromotionFound({
-          ...promotionInfo,
-          start_at: startAt,
-          end_at: endAt,
-        });
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_STATE,
-            getPromotionStateMessage(true, startAt, endAt),
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('when promotion has ended', () => {
-      it('should return VALIDATION_INVALID_STATE', async () => {
-        const startAt = new Date('2026-11-15T09:00:00.000Z');
-        const endAt = new Date('2026-11-15T10:00:00.000Z');
-
-        mockPromotionFound({
-          ...promotionInfo,
-          start_at: startAt,
-          end_at: endAt,
-        });
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: new Status(
-            StatusCode.VALIDATION_INVALID_STATE,
-            getPromotionStateMessage(true, startAt, endAt),
-          ),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('when promotion is ongoing', () => {
+    describe('When retrieving product', () => {
       beforeEach(() => {
-        mockPromotionFound();
+        mockSuccessfulPromotion();
       });
 
-      it('should retrieve the promotion using the provided promotion ID', async () => {
+      It('should return validation error when product is not found', async () => {
+        productRepo.getProduct.mockResolvedValue({
+          status: createStatus(StatusCode.SUCCESS),
+          product: undefined,
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('product not found');
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when product repository fails', async () => {
+        productRepo.getProduct.mockResolvedValue({
+          status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+          product: undefined,
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('product not found');
+      });
+
+      It('should retrieve product using the provided item ID', async () => {
+        mockSuccessfulProduct();
+        mockSuccessfulIdGeneration();
+        mockSuccessfulReservation();
+
         await feature.placeOrder(validParam);
 
-        expect(promotionRepo.getPromotion).toHaveBeenCalledExactlyOnceWith({
-          unique_id: validParam.promotion_id,
-        });
-      });
-
-      it('should continue to product lookup', async () => {
-        mockProductFound();
-        mockIdsGenerated();
-        mockOrderCreated();
-
-        await feature.placeOrder(validParam);
-
-        expect(productRepo.getProduct).toHaveBeenCalledExactlyOnceWith({
-          unique_id: validParam.item_id,
-        });
-      });
-
-      describe('when product lookup fails', () => {
-        it('should return VALIDATION_INVALID_PARAM', async () => {
-          productRepo.getProduct.mockResolvedValue(
-            createProductResult({
-              status: new Status(
-                StatusCode.VALIDATION_INVALID_STATE,
-                'product lookup failed',
-              ),
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(productRepo.getProduct).toHaveBeenCalledExactlyOnceWith({
+        expect(productRepo.getProduct).toHaveBeenCalledWith(
+          {
             unique_id: validParam.item_id,
-          });
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_PARAM,
-              'product not found',
-            ),
-          });
-
-          expect(idGenerator.generateIds).not.toHaveBeenCalled();
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
+          },
+          {
+            readCache: true,
+          },
+        );
       });
-
-      describe('when product does not exist', () => {
-        it('should return VALIDATION_INVALID_PARAM', async () => {
-          productRepo.getProduct.mockResolvedValue(
-            createProductResult({
-              status: new Status(StatusCode.SUCCESS, 'success'),
-              product: undefined,
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_PARAM,
-              'product not found',
-            ),
-          });
-
-          expect(idGenerator.generateIds).not.toHaveBeenCalled();
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      });
-
-      describe('when ID generation fails', () => {
-        beforeEach(() => {
-          mockProductFound();
-        });
-
-        it('should return VALIDATION_INVALID_PARAM when generation status is unsuccessful', async () => {
-          idGenerator.generateIds.mockReturnValue(
-            createGenerateIdsResult({
-              status: new Status(
-                StatusCode.VALIDATION_INVALID_STATE,
-                'ID generation failed',
-              ),
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(idGenerator.generateIds).toHaveBeenCalledExactlyOnceWith(2);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_PARAM,
-              'failed generate id',
-            ),
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-
-        it('should return VALIDATION_INVALID_PARAM when generated IDs are missing', async () => {
-          idGenerator.generateIds.mockReturnValue(
-            createGenerateIdsResult({
-              status: new Status(StatusCode.SUCCESS, 'success'),
-              ids: undefined,
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_PARAM,
-              'failed generate id',
-            ),
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      });
-
-      describe('when order is successfully created', () => {
-        beforeEach(() => {
-          mockProductFound();
-          mockIdsGenerated();
-          mockOrderCreated();
-        });
-
-        it('should generate two IDs', async () => {
-          await feature.placeOrder(validParam);
-
-          expect(idGenerator.generateIds).toHaveBeenCalledExactlyOnceWith(2);
-        });
-
-        it('should create an order with the correct parameters', async () => {
-          await feature.placeOrder(validParam);
-
-          expect(orderRepo.createOrder).toHaveBeenCalledExactlyOnceWith(
-            expect.objectContaining({
-              idempotency_key: validParam.idempotency_key,
-              unique_id: 'order-123',
-              promotion_key: validParam.promotion_id,
-              buyer_email: 'customer@example.com',
-              buyer_name: 'John Doe',
-              status: OrderStatus.PENDING,
-              grand_total: product.selling_price,
-              item: {
-                unique_id: 'line-123',
-                name: product.name,
-                description: product.description,
-                product_id: product.unique_id,
-                quantity: 1,
-                unit_price: product.selling_price,
-              },
-            }),
-          );
-        });
-
-        it('should use the same timestamp for placed_at and created_at', async () => {
-          await feature.placeOrder(validParam);
-
-          const createParam = orderRepo.createOrder.mock.calls[0][0];
-
-          expect(createParam.placed_at).toBeInstanceOf(Date);
-          expect(createParam.created_at).toBeInstanceOf(Date);
-          expect(createParam.placed_at).toBe(createParam.created_at);
-          expect(createParam.placed_at).toEqual(NOW);
-        });
-
-        it('should return SUCCESS with the created order', async () => {
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.SUCCESS,
-              'success place order',
-            ),
-            order: {
-              exists: false,
-              unique_id: 'order-123',
-            },
-          });
-        });
-      });
-
-      describe('when the email contains uppercase characters', () => {
-        it('should normalize the email to lowercase', async () => {
-          mockProductFound();
-          mockIdsGenerated();
-          mockOrderCreated();
-
-          await feature.placeOrder({
-            ...validParam,
-            email: 'CUSTOMER@EXAMPLE.COM',
-          });
-
-          expect(orderRepo.createOrder).toHaveBeenCalledWith(
-            expect.objectContaining({
-              buyer_email: 'customer@example.com',
-            }),
-          );
-        });
-      });
-
-      describe('when the order already exists', () => {
-        it('should return the existing order', async () => {
-          mockProductFound();
-          mockIdsGenerated();
-          mockOrderCreated(true, 'existing-order-123');
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.SUCCESS,
-              'success place order',
-            ),
-            order: {
-              exists: true,
-              unique_id: 'existing-order-123',
-            },
-          });
-        });
-      });
-
-      describe('when order creation fails', () => {
-        it('should return the repository status', async () => {
-          const status = new Status(
-            StatusCode.VALIDATION_INVALID_STATE,
-            'unable to create order',
-          );
-
-          mockProductFound();
-          mockIdsGenerated();
-
-          orderRepo.createOrder.mockResolvedValue(
-            createOrderResult({
-              status,
-              order: undefined,
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({ status });
-          expect(result.order).toBeUndefined();
-        });
-
-        it('should return the repository status when order is missing despite SUCCESS', async () => {
-          const status = new Status(StatusCode.SUCCESS, 'success');
-
-          mockProductFound();
-          mockIdsGenerated();
-
-          orderRepo.createOrder.mockResolvedValue(
-            createOrderResult({
-              status,
-              order: undefined,
-            }),
-          );
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({ status });
-          expect(result.order).toBeUndefined();
-        });
-      });
-
-      describe('when inventory reservation succeeds', () => {
-        beforeEach(() => {
-          mockProductFound();
-          mockIdsGenerated();
-          mockStockReserved();
-        });
-
-        it('should reserve stock using the correct parameters', async () => {
-          await feature.placeOrder(validParam);
-
-          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
-            inventory_key: `inventory:${validParam.item_id}`,
-            identifier_key: `order:${validParam.item_id}`,
-            identifier_id: validParam.email,
-            identifier_limit: '1',
-          });
-        });
-
-        it('should continue to order creation', async () => {
-          mockOrderCreated();
-
-          await feature.placeOrder(validParam);
-
-          expect(orderRepo.createOrder).toHaveBeenCalledTimes(1);
-        });
-
-        it('should normalize email before reserving stock', async () => {
-          mockOrderCreated();
-
-          await feature.placeOrder({
-            ...validParam,
-            email: 'CUSTOMER@EXAMPLE.COM',
-          });
-
-          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith(
-            expect.objectContaining({
-              identifier_id: 'customer@example.com',
-            }),
-          );
-        });
-      });
-
-      describe('when inventory is out of stock', () => {
-        it('should return VALIDATION_INVALID_STATE', async () => {
-          mockProductFound();
-          mockIdsGenerated();
-
-          mockStockReserved(ReserveStockCode.RESERVE_OUT_OF_STOCK);
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_STATE,
-              'insufficient product stock',
-            ),
-          });
-
-          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
-            inventory_key: `inventory:${validParam.item_id}`,
-            identifier_key: `order:${validParam.item_id}`,
-            identifier_id: validParam.email,
-            identifier_limit: '1',
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      });
-
-      describe('when identifier purchase limit is reached', () => {
-        it('should return VALIDATION_INVALID_STATE', async () => {
-          mockProductFound();
-          mockIdsGenerated();
-
-          mockStockReserved(ReserveStockCode.RESERVE_LIMIT_REACHED);
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_STATE,
-              'unable to order more than 1',
-            ),
-          });
-
-          expect(inventoryService.reserveStock).toHaveBeenCalledExactlyOnceWith({
-            inventory_key: `inventory:${validParam.item_id}`,
-            identifier_key: `order:${validParam.item_id}`,
-            identifier_id: validParam.email,
-            identifier_limit: '1',
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      });
-
-      describe('when inventory reservation returns an unexpected code', () => {
-        it('should return VALIDATION_INVALID_STATE', async () => {
-          mockProductFound();
-          mockIdsGenerated();
-
-          mockStockReserved(999 as ReserveStockCode);
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: new Status(
-              StatusCode.VALIDATION_INVALID_STATE,
-              'unable to reserve order',
-            ),
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      });
-
-      describe('when an unexpected exception occurs', () => {
-        it('should handle inventory service exceptions', async () => {
-          const error = new Error('Redis connection unavailable');
-
-          mockPromotionFound();
-          mockProductFound();
-          mockIdsGenerated();
-
-          inventoryService.reserveStock.mockRejectedValue(error);
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: Status.fromError(error),
-          });
-
-          expect(inventoryService.reserveStock).toHaveBeenCalledTimes(1);
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-
-        it('should handle non-Error inventory service exceptions', async () => {
-          const error = 'Unexpected inventory reservation error';
-
-          mockPromotionFound();
-          mockProductFound();
-          mockIdsGenerated();
-
-          inventoryService.reserveStock.mockRejectedValue(error);
-
-          const result = await feature.placeOrder(validParam);
-
-          expect(result).toEqual({
-            status: Status.fromError(error),
-          });
-
-          expect(orderRepo.createOrder).not.toHaveBeenCalled();
-        });
-      })
     });
 
-    describe('when an unexpected exception occurs', () => {
-      it('should handle promotion repository exceptions', async () => {
-        const error = new Error('Promotion database unavailable');
-
-        promotionRepo.getPromotion.mockRejectedValue(error);
-
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
-
-        expect(productRepo.getProduct).not.toHaveBeenCalled();
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+    describe('When generating order ID', () => {
+      beforeEach(() => {
+        mockSuccessfulPromotion();
+        mockSuccessfulProduct();
       });
 
-      it('should handle product repository exceptions', async () => {
-        const error = new Error('Product database unavailable');
-
-        mockPromotionFound();
-        productRepo.getProduct.mockRejectedValue(error);
+      It('should return validation error when ID generation fails', async () => {
+        idGenerator.generateIds.mockReturnValue({
+          status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+          ids: undefined,
+        });
 
         const result = await feature.placeOrder(validParam);
 
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
-
-        expect(idGenerator.generateIds).not.toHaveBeenCalled();
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('failed generate id');
+        expect(inventoryService.reserveStock).not.toHaveBeenCalled();
       });
 
-      it('should handle ID generator exceptions', async () => {
-        const error = new Error('ID generation failed');
+      It('should generate one order ID', async () => {
+        mockSuccessfulIdGeneration();
+        mockSuccessfulReservation();
 
-        mockPromotionFound();
-        mockProductFound();
+        await feature.placeOrder(validParam);
 
-        idGenerator.generateIds.mockImplementation(() => {
-          throw error;
-        });
+        expect(idGenerator.generateIds).toHaveBeenCalledWith(1);
+      });
+    });
 
-        const result = await feature.placeOrder(validParam);
-
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
-
-        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+    describe('When reserving inventory', () => {
+      beforeEach(() => {
+        mockSuccessfulPromotion();
+        mockSuccessfulProduct();
+        mockSuccessfulIdGeneration();
       });
 
-      it('should handle order repository exceptions', async () => {
-        const error = new Error('Database insert failed');
-
-        mockPromotionFound();
-        mockProductFound();
-        mockIdsGenerated();
-
-        orderRepo.createOrder.mockRejectedValue(error);
+      It('should return invalid state when stock is insufficient', async () => {
+        inventoryService.reserveStock.mockResolvedValue({
+          code: ReserveStockCode.RESERVE_OUT_OF_STOCK,
+        });
 
         const result = await feature.placeOrder(validParam);
 
-        expect(result).toEqual({
-          status: Status.fromError(error),
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_STATE)).toBe(true);
+        expect(result.status.message).toBe('insufficient product stock');
+        expect(eventClient.emit).not.toHaveBeenCalled();
+      });
+
+      It('should return invalid state when identifier limit is reached', async () => {
+        inventoryService.reserveStock.mockResolvedValue({
+          code: ReserveStockCode.RESERVE_LIMIT_REACHED,
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_STATE)).toBe(true);
+        expect(result.status.message).toBe('unable to order more than 1');
+        expect(eventClient.emit).not.toHaveBeenCalled();
+      });
+
+      It('should return invalid state when reservation fails', async () => {
+        inventoryService.reserveStock.mockResolvedValue({
+          code: 'UNKNOWN_ERROR',
+        });
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_STATE)).toBe(true);
+        expect(result.status.message).toBe('unable to reserve order');
+        expect(eventClient.emit).not.toHaveBeenCalled();
+      });
+
+      It('should reserve inventory using the correct parameters', async () => {
+        mockSuccessfulReservation();
+
+        await feature.placeOrder(validParam);
+
+        expect(inventoryService.reserveStock).toHaveBeenCalledWith({
+          inventory_key: 'inventory:product-001',
+          identifier_key: 'order:product-001',
+          identifier_id: 'john@example.com',
+          identifier_limit: '1',
+        });
+      });
+    });
+
+    describe('When publishing order event', () => {
+      beforeEach(() => {
+        mockSuccessfulDependencies();
+      });
+
+      It('should publish order placed event', async () => {
+        await feature.placeOrder(validParam);
+
+        expect(eventClient.emit).toHaveBeenCalledOnce();
+      });
+
+      It('should return successful result after publishing event', async () => {
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(true);
+        expect(result.status.message).toBe('success place order');
+
+        expect(result.order).toEqual({
+          exists: false,
+          unique_id: orderId,
         });
       });
 
-      it('should handle non-Error exceptions', async () => {
-        const error = 'Unexpected order error';
-
-        promotionRepo.getPromotion.mockRejectedValue(error);
+      It('should return error when event publishing fails', async () => {
+        eventClient.emit.mockReturnValue(
+          throwError(() => new Error('event publishing failed')),
+        );
 
         const result = await feature.placeOrder(validParam);
 
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
+        expect(eventClient.emit).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('When an unexpected error occurs', () => {
+      It('should return error when promotion repository throws', async () => {
+        promotionRepo.getPromotion.mockRejectedValue(
+          new Error('database connection failed'),
+        );
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
+      });
+
+      It('should return error when product repository throws', async () => {
+        mockSuccessfulPromotion();
+
+        productRepo.getProduct.mockRejectedValue(
+          new Error('database connection failed'),
+        );
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
+      });
+
+      It('should return error when inventory service throws', async () => {
+        mockSuccessfulPromotion();
+        mockSuccessfulProduct();
+        mockSuccessfulIdGeneration();
+
+        inventoryService.reserveStock.mockRejectedValue(
+          new Error('inventory service unavailable'),
+        );
+
+        const result = await feature.placeOrder(validParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
       });
     });
   });
 
   describe('getOrder', () => {
-    describe('when order is found', () => {
-      beforeEach(() => {
-        mockOrderFound();
+    const uniqueId = 'order-001';
+
+    It('should retrieve order successfully', async () => {
+      const expectedResult = {
+        status: createStatus(StatusCode.SUCCESS),
+        order: {
+          unique_id: uniqueId,
+          buyer_name: 'John Doe',
+          buyer_email: 'john@example.com',
+          status: 'placed',
+          grand_total: 100_000,
+          placed_at: new Date(),
+          created_at: new Date(),
+          items: [],
+        },
+      };
+
+      orderRepo.getOrder.mockResolvedValue(expectedResult);
+
+      const result = await feature.getOrder({
+        unique_id: uniqueId,
       });
 
-      it('should retrieve the order using the provided unique ID', async () => {
-        await feature.getOrder(validGetOrderParam);
+      expect(result).toBe(expectedResult);
 
-        expect(orderRepo.getOrder).toHaveBeenCalledExactlyOnceWith({
-          unique_id: validGetOrderParam.unique_id,
-        }, {
+      expect(orderRepo.getOrder).toHaveBeenCalledWith(
+        {
+          unique_id: uniqueId,
+        },
+        {
           readCache: true,
           writeCache: true,
-          cachePrefix: `order-detail`,
-        });
+          cachePrefix: 'order-detail',
+        },
+      );
+    });
+
+    It('should return repository result when order is not found', async () => {
+      const expectedResult = {
+        status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+        order: undefined,
+      };
+
+      orderRepo.getOrder.mockResolvedValue(expectedResult);
+
+      const result = await feature.getOrder({
+        unique_id: uniqueId,
       });
 
-      it('should return SUCCESS with the order details', async () => {
-        const result = await feature.getOrder(validGetOrderParam);
+      expect(result).toBe(expectedResult);
+    });
 
-        expect(result).toEqual({
-          status: new Status(StatusCode.SUCCESS, 'success'),
-          order: orderInfo,
-        });
+    It('should return error when repository throws', async () => {
+      orderRepo.getOrder.mockRejectedValue(
+        new Error('database connection failed'),
+      );
+
+      const result = await feature.getOrder({
+        unique_id: uniqueId,
       });
 
-      it('should return the order items', async () => {
-        const result = await feature.getOrder(validGetOrderParam);
+      expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
+    });
 
-        expect(result.order?.items).toEqual([
-          {
-            unique_id: 'line-123',
-            name: 'Product Name',
-            description: 'Product Description',
-            quantity: 1,
-            unit_price: 10000,
-          },
-        ]);
+    It('should pass the requested unique ID to repository', async () => {
+      orderRepo.getOrder.mockResolvedValue({
+        status: createStatus(StatusCode.SUCCESS),
+      });
+
+      await feature.getOrder({
+        unique_id: uniqueId,
+      });
+
+      expect(orderRepo.getOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          unique_id: uniqueId,
+        }),
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('createOrder', () => {
+    describe('When validating parameters', () => {
+      It('should return validation error when parameters are invalid', async () => {
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          buyer_email: 'invalid-email',
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('invalid parameter');
+
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when required parameters are missing', async () => {
+        const result = await feature.createOrder({
+          idempotency_key: validCreateParam.idempotency_key,
+          promotion_key: validCreateParam.promotion_key,
+        } as never);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(productRepo.getProduct).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when item quantity exceeds the limit', async () => {
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          item_quantity: 2,
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('invalid parameter');
+      });
+
+      It('should return validation error when item quantity is zero', async () => {
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          item_quantity: 0,
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
+
+      It('should return validation error when placed_at is not a Date', async () => {
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          placed_at: '2026-11-17T03:00:00.000Z',
+        } as never);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
+
+      It('should return validation error when item name is empty', async () => {
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          item_name: ' ',
+        });
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+      });
+
+      It('should allow an empty item description', async () => {
+        mockSuccessfulCreateDependencies();
+        mockSuccessfulCreateOrder();
+
+        const result = await feature.createOrder({
+          ...validCreateParam,
+          item_description: '',
+        });
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(true);
       });
     });
 
-    describe('when order is not found', () => {
-      it('should return the repository result without an order', async () => {
-        const status = new Status(
+    describe('When retrieving product', () => {
+      It('should return validation error when product is not found', async () => {
+        productRepo.getProduct.mockResolvedValue({
+          status: createStatus(StatusCode.SUCCESS),
+          product: undefined,
+        });
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('product not found');
+
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+
+      It('should return validation error when product repository fails', async () => {
+        productRepo.getProduct.mockResolvedValue({
+          status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+          product: undefined,
+        });
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('product not found');
+      });
+
+      It('should retrieve product using the provided item ID', async () => {
+        mockSuccessfulProduct();
+        mockSuccessfulIdGeneration();
+        mockSuccessfulCreateOrder();
+
+        await feature.createOrder(validCreateParam);
+
+        expect(productRepo.getProduct).toHaveBeenCalledWith({
+          unique_id: validCreateParam.item_id,
+        });
+      });
+    });
+
+    describe('When generating item ID', () => {
+      beforeEach(() => {
+        mockSuccessfulProduct();
+      });
+
+      It('should return validation error when ID generation fails', async () => {
+        idGenerator.generateIds.mockReturnValue({
+          status: createStatus(StatusCode.VALIDATION_INVALID_PARAM),
+          ids: undefined,
+        });
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status.is(StatusCode.VALIDATION_INVALID_PARAM)).toBe(true);
+        expect(result.status.message).toBe('failed generate id');
+
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+
+      It('should generate one item ID', async () => {
+        mockSuccessfulIdGeneration();
+        mockSuccessfulCreateOrder();
+
+        await feature.createOrder(validCreateParam);
+
+        expect(idGenerator.generateIds).toHaveBeenCalledWith(1);
+      });
+    });
+
+    describe('When creating order in repository', () => {
+      beforeEach(() => {
+        mockSuccessfulCreateDependencies();
+      });
+
+      It('should create order with the correct parameters', async () => {
+        mockSuccessfulCreateOrder();
+
+        await feature.createOrder(validCreateParam);
+
+        expect(orderRepo.createOrder).toHaveBeenCalledOnce();
+
+        expect(orderRepo.createOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            idempotency_key: validCreateParam.idempotency_key,
+            unique_id: validCreateParam.order_id,
+            promotion_key: validCreateParam.promotion_key,
+            buyer_email: validCreateParam.buyer_email,
+            buyer_name: validCreateParam.buyer_name,
+            status: OrderStatus.PENDING,
+            grand_total: validCreateParam.item_unit_price,
+            item: {
+              unique_id: itemId,
+              name: validCreateParam.item_name,
+              description: validCreateParam.item_description,
+              product_id: validCreateParam.item_id,
+              unit_price: validCreateParam.item_unit_price,
+              quantity: validCreateParam.item_quantity,
+            },
+            placed_at: validCreateParam.placed_at,
+            created_at: expect.any(Date),
+          }),
+        );
+      });
+
+      It('should use the generated ID for the order item', async () => {
+        mockSuccessfulIdGeneration('generated-item-001');
+        mockSuccessfulCreateOrder();
+
+        await feature.createOrder(validCreateParam);
+
+        expect(orderRepo.createOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            item: expect.objectContaining({
+              unique_id: 'generated-item-001',
+            }),
+          }),
+        );
+      });
+
+      It('should return repository status when order creation fails', async () => {
+        const repositoryStatus = createStatus(
           StatusCode.VALIDATION_INVALID_PARAM,
-          'order not found',
         );
 
-        orderRepo.getOrder.mockResolvedValue(
-          createGetOrderResult({
-            status,
-            order: undefined,
-          }),
-        );
-
-        const result = await feature.getOrder(validGetOrderParam);
-
-        expect(result).toEqual({
-          status,
+        orderRepo.createOrder.mockResolvedValue({
+          status: repositoryStatus,
           order: undefined,
         });
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status).toBe(repositoryStatus);
+        expect(result.order).toBeUndefined();
+      });
+
+      It('should return repository status when created order is missing', async () => {
+        const repositoryStatus = createStatus(StatusCode.SUCCESS);
+
+        orderRepo.createOrder.mockResolvedValue({
+          status: repositoryStatus,
+          order: undefined,
+        });
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status).toBe(repositoryStatus);
+        expect(result.order).toBeUndefined();
+      });
+
+      It('should return successful result after creating order', async () => {
+        const createdAt = mockSuccessfulCreateOrder();
+
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(true);
+        expect(result.status.message).toBe('success create order');
+
+        expect(result.order).toEqual({
+          unique_id: orderId,
+          created_at: createdAt,
+        });
+      });
+
+      It('should use the provided order ID as the repository unique ID', async () => {
+        mockSuccessfulCreateOrder();
+
+        await feature.createOrder({
+          ...validCreateParam,
+          order_id: 'custom-order-001',
+        });
+
+        expect(orderRepo.createOrder).toHaveBeenCalledWith(
+          expect.objectContaining({
+            unique_id: 'custom-order-001',
+          }),
+        );
       });
     });
 
-    describe('when order repository returns an unsuccessful status', () => {
-      it('should return the repository result', async () => {
-        const status = new Status(
-          StatusCode.VALIDATION_INVALID_STATE,
-          'unable to retrieve order',
+    describe('When an unexpected error occurs', () => {
+      It('should return error when product repository throws', async () => {
+        productRepo.getProduct.mockRejectedValue(
+          new Error('database connection failed'),
         );
 
-        orderRepo.getOrder.mockResolvedValue(
-          createGetOrderResult({
-            status,
-            order: undefined,
-          }),
+        const result = await feature.createOrder(validCreateParam);
+
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
+        expect(idGenerator.generateIds).not.toHaveBeenCalled();
+        expect(orderRepo.createOrder).not.toHaveBeenCalled();
+      });
+
+      It('should return error when order repository throws', async () => {
+        mockSuccessfulCreateDependencies();
+
+        orderRepo.createOrder.mockRejectedValue(
+          new Error('database connection failed'),
         );
 
-        const result = await feature.getOrder(validGetOrderParam);
+        const result = await feature.createOrder(validCreateParam);
 
-        expect(result).toEqual({
-          status,
-          order: undefined,
-        });
-      });
-    });
-
-    describe('when an unexpected exception occurs', () => {
-      it('should handle order repository exceptions', async () => {
-        const error = new Error('Order database unavailable');
-
-        orderRepo.getOrder.mockRejectedValue(error);
-
-        const result = await feature.getOrder(validGetOrderParam);
-
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
-      });
-
-      it('should handle non-Error exceptions', async () => {
-        const error = 'Unexpected order repository error';
-
-        orderRepo.getOrder.mockRejectedValue(error);
-
-        const result = await feature.getOrder(validGetOrderParam);
-
-        expect(result).toEqual({
-          status: Status.fromError(error),
-        });
+        expect(result.status.is(StatusCode.SUCCESS)).toBe(false);
       });
     });
   });

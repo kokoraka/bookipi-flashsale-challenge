@@ -1,14 +1,18 @@
-import { Controller, HttpStatus, Post, Body, Headers, Res, Get, Param } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Headers, Res, Get, Param, Inject } from '@nestjs/common';
 import type { Response } from 'express';
 import { StatusCode } from '../../entities/status/StatusCode.js';
-import { OrderFeature } from './order.feature.js';
+import { FEATURE_ORDER } from './order.feature.js';
+import type { OrderFeatureInterface } from './order.feature.js';
 import { PlaceOrderRequest } from '../../restgen/models/PlaceOrderRequest.js'
 import { PlaceOrderResponse } from '../../restgen/models/PlaceOrderResponse.js'
 import { GetOrderByIdResponse } from '../../restgen/index.js';
 
 @Controller()
 export class OrderController {
-  constructor(private readonly orderFeature: OrderFeature) { }
+  constructor(
+    @Inject(FEATURE_ORDER)
+    private readonly orderFeature: OrderFeatureInterface,
+  ) { }
 
   @Post('/v1/orders')
   async placeOrder(

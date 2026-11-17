@@ -7,6 +7,7 @@ import { FlashSaleModule } from '../flashsale/flashsale.module.js'
 import { CacheModule } from '../../repositories/cache.module.js';
 import { OrderModule } from '../order/order.module.js'
 import { AppService } from '../../services/app.service.js';
+import { EventModule } from '../../services/event/event.module.js';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AppService } from '../../services/app.service.js';
       }),
       inject: [ConfigService],
     }),
+    EventModule,
     FlashSaleModule,
     OrderModule
   ],

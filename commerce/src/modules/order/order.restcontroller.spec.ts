@@ -35,6 +35,7 @@ describe('OrderController', () => {
     name: 'John Doe',
     item_id: 'product-123',
     quantity: '1',
+    promotion_id: '1',
   };
 
   const idempotencyKey = 'idempotency-key-123';
@@ -108,6 +109,7 @@ describe('OrderController', () => {
           name: request.name,
           item_id: request.item_id,
           quantity: request.quantity,
+          promotion_id: request.promotion_id,
         });
 
         expect(response.status).toHaveBeenCalledWith(HttpStatus.CREATED);
