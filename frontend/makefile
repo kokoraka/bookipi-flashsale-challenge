@@ -9,6 +9,10 @@ help:
 install:
 	npm install
 
+.PHONY: start
+start:
+	npm start
+
 .PHONY: generate
 generate:
 	npm run generate:orvalapi
