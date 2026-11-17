@@ -41,6 +41,18 @@ export class PromotionView {
     return this.unique_id
   }
 
+  isUpcoming(): boolean {
+    return this.state == PromotionState.UPCOMING
+  }
+
+  isEnded(): boolean {
+    return this.state == PromotionState.ENDED
+  }
+
+  isOngoing(): boolean {
+    return this.state == PromotionState.ONGOING
+  }
+
   getStateLabel(): string {
     return PROMOTION_LABEL[this.state as PromotionState]
   }
