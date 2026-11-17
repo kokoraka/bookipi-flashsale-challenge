@@ -1,0 +1,2 @@
+
+export const SERVICE_EVENT_TOKEN = Symbol('SERVICE_EVENT_TOKEN');
