@@ -2,7 +2,7 @@
 
 ## Todos
 
-1. run linter
+1. check business process
 
 ## Nice to Have
 
