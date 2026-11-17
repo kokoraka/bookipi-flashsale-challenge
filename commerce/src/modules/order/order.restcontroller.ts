@@ -44,7 +44,7 @@ export class OrderController {
       }
     }
 
-    let httpCode = HttpStatus.CREATED
+    let httpCode = HttpStatus.ACCEPTED
     if (placeRes.order.exists) {
       httpCode = HttpStatus.OK
     }
