@@ -9,6 +9,18 @@
 - Database = MySQL default config with replica
 - Service = NestJS rest api
 
+## Measurements
+
+### API Response Time
+
+| Rating | Response Time | Description |
+| :---: | :---: | :---: |
+| Excellent | < 100ms | Real-time actions like chat messages or live autosaves. Feels completely instantaneous. |
+| Good | 100 – 300 ms | Standard CRUD operations like creating a user, submitting a comment, or updating a cart. |
+| Acceptable | 300 ms – 1 s | Heavier tasks involving multiple database writes or third-party checks, like processing a payment. |
+| Slow | 1 – 2 s | Complex form submissions. Users notice the delay, and abandonment rates start to climb. |
+| Poor | > 2s | Unacceptable for synchronous web actions. Anything over 5 seconds causes severe user frustration. |
+
 ## Commerce API
 
 ### Get Product API
@@ -120,9 +132,13 @@ Testing held by running the performance test script, the result is collected thr
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 1 | not ok | 8% | 8.57s | 28.19s | 4.81s | 250.80 | 60.09% | 168.07MB |
 | 2 | not ok | 7% | 1.61s | 28.38s | 2.2s | 383.31 | 86.74% | 188.02MB |
-| 3 | not ok | 3% | 433.26ms | 30.49s | 427.43ms | 697.92 | N/A | N/A |
+| 3 | acceptable | 3% | 433.26ms | 30.49s | 427.43ms | 697.92 | N/A | N/A |
+| 4 | acceptable | 3% | 117.2ms | 30.49s | 422.26ms | 897.52 | N/A | N/A |
+| 5 | acceptable | 0% | 275.24ms | 676.43ms | 554.49ms | 784.96 | N/A | N/A |
 
-5000 qty, There's no over-sell, found p95 spike on attempt 1
+5K qty, There's no over-sell, found p95 spike on attempt 1.
+5K qty, There's no over-sell, rps and avg improved on attempt 4 (queue)
+200K qty, order placed 142025 there's no over-sell (test ended) on attempt 5 (queue)
 
 #### Optimization Attempt
 
@@ -241,5 +257,50 @@ i put the inventory counter into cache instead of writing into database directly
       unique_id: createRes.order.unique_id,
     }
   }
+```
+
+3. Queue order creation
+
+Instead of creating the order right away after reserving the stock, this time i delay the order creation by putting the request into queue `order.placed`
+
+```ts
+  const reserveRes = await this.inventoryService.reserveStock({
+    inventory_key: `inventory:${validateRes.data.item_id}`,
+    identifier_key: `order:${validateRes.data.item_id}`,
+    identifier_id: validateRes.data.email,
+    identifier_limit: `${MAX_ORDER_PER_IDENTIFIER}`,
+  })
+  if (reserveRes.code != ReserveStockCode.RESERVE_SUCCESS) {
+    switch (reserveRes.code) {
+      case ReserveStockCode.RESERVE_OUT_OF_STOCK:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'insufficient product stock'),
+        }
+      case ReserveStockCode.RESERVE_LIMIT_REACHED:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, `unable to order more than ${MAX_ORDER_PER_IDENTIFIER}`),
+        }
+      default:
+        return {
+          status: new Status(StatusCode.VALIDATION_INVALID_STATE, 'unable to reserve order'),
+        }
+    }
+  }
+
+  await lastValueFrom(
+    this.eventClient.emit(EVENT_ORDER_PLACED, {
+      idempotency_key: validateRes.data.idempotency_key,
+      promotion_key: p.promotion_id,
+      order_id: orderId,
+      buyer_email: validateRes.data.email,
+      buyer_name: validateRes.data.name,
+      item_id: validateRes.data.item_id,
+      item_quantity: validateRes.data.quantity,
+      item_name: getProduct.product.name,
+      item_description: getProduct.product.description,
+      item_unit_price: getProduct.product.selling_price,
+      placed_at: currentTs.getTime(),
+    } as OrderPlacedMessage)
+  )
 ```
 

@@ -145,10 +145,25 @@ services:
       - redis-server
     networks:
       - mysql-net
+  messaging:
+    image: redis:8.8.0
+    container_name: messaging
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+    volumes:
+      - messaging_data:/data
+    networks:
+      - mysql-net
 volumes:
   mysql-db-1-data:
   mysql-db-2-data:
   mysql-db-3-data:
+  messaging_data:
 networks:
   mysql-net:
     driver: bridge

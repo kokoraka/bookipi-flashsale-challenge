@@ -69,6 +69,7 @@ export type CreateOrderResult = {
 export type CreateOrderItem = {
   exists: boolean
   unique_id: string
+  created_at: Date
 }
 
 export type GetOrderParam = {

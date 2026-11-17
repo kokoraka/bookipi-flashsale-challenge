@@ -12,7 +12,7 @@ import { CLIENT_REDIS_TOKEN } from './redis/redis.js'
 export const SERVICE_INVENTORY_TOKEN = Symbol('SERVICE_INVENTORY_TOKEN');
 
 export interface InventoryServiceInterface {
-  reserveStock(p: ReserveStockParam): ReserveStockResult
+  reserveStock(p: ReserveStockParam): Promise<ReserveStockResult>
 }
 
 export type ReserveStockParam = {
