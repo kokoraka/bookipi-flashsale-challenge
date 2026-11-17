@@ -8,12 +8,18 @@ import { useConfig } from "../components/Config"
 import { Meta } from "../components/Meta"
 import { Spinner } from "../components/Spinner"
 import { PromotionState, PromotionView } from "../features/Promotion"
-import { useGetFlashsalePromotionById, useGetFlashsaleProductById, usePlaceOrder } from "../services/react"
 import { ProductView } from "../features/Product"
 import { OrderForm, OrderFormData, ProductCard, PromotionAlert } from "../features/Flashsale";
 import { useToast } from "../components/Toast";
 import { Status, StatusCode } from "../status";
 import { generateIds } from "../services/text/idgen";
+import {
+  useGetFlashsalePromotionById, useGetFlashsaleProductById,
+  usePlaceOrder, useGetOrderById
+} from "../services/react"
+import { GetOrderByIdData } from "../services/orvalapi";
+import { OrderCard } from "../features/Flashsale/OrderCard";
+import { OrderView } from "../features/Order/Order";
 
 const defaultOrderForm = {
   email: "",
@@ -30,6 +36,7 @@ export default function Home(): React.JSX.Element {
 
   const [orderForm, setOrderForm] = React.useState(defaultOrderForm)
   const [orderFormLoading, setOrderFormLoading] = React.useState(false)
+  const [orderDetail, setOrderDetail] = React.useState<OrderView | undefined>(undefined)
 
   const {
     data: promotionData,
@@ -43,6 +50,10 @@ export default function Home(): React.JSX.Element {
     isPending: isGetProductPending,
     execute: getProduct
   } = useGetFlashsaleProductById()
+
+  const {
+    execute: getOrder
+  } = useGetOrderById()
 
   const {
     execute: placeOrder
@@ -130,9 +141,8 @@ export default function Home(): React.JSX.Element {
           'Idempotency-Key': idempotencyKey
         }
       })
-      setOrderFormLoading(false)
       const placeStat = Status.fromObjectAlways(placeRes)
-      if (!placeStat.is(StatusCode.SUCCESS)) {
+      if (!placeStat.is(StatusCode.SUCCESS) || !placeRes.data?.order) {
         switch (placeStat.code) {
           case
             StatusCode.VALIDATION_INVALID_PARAM,
@@ -146,10 +156,72 @@ export default function Home(): React.JSX.Element {
       }
 
       toast.success(`Success place order`)
+      await viewOrder(placeRes.data?.order.unique_id)
     } catch (e: unknown) {
       const err = e as Error
       toast.error(`Unexpected error: ${err.message}`)
+    } finally {
+      setOrderFormLoading(false)
     }
+  }
+
+  async function checkOrder(orderId: string, opts: {
+    max_attempts: number
+    initial_delay: number
+  } = {
+      max_attempts: 3,
+      initial_delay: 3_000,
+    }): Promise<{ status: Status; data?: GetOrderByIdData }> {
+    const {
+      max_attempts,
+      initial_delay,
+    } = opts
+
+    await new Promise(resolve => setTimeout(resolve, initial_delay))
+
+    for (let attempt = 0; attempt < max_attempts; attempt++) {
+      const { status, data } = await getOrder([orderId])
+
+      if (status.is(StatusCode.SUCCESS) && data) {
+        return { status, data }
+      }
+
+      // Only retry when the order has not been found yet.
+      if (!status.is(StatusCode.RESOURCE_NOT_FOUND)) {
+        return { status, data }
+      }
+
+      // No need to wait after the final attempt.
+      if (attempt < max_attempts - 1) {
+        const delay = initial_delay * 2 ** attempt
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+
+    return {
+      status: new Status(StatusCode.RESOURCE_NOT_FOUND, 'Order not found'),
+    }
+  }
+
+  async function viewOrder(orderId: string) {
+    const checkRes = await checkOrder(orderId)
+    if (!checkRes.status.is(StatusCode.SUCCESS) || !checkRes.data) {
+      toast.warn(
+        <>
+          Order not found <br />
+          Order ID: {orderId} <br />
+          Please check again later...
+        </>
+      )
+      return
+    }
+
+    const orderView = new OrderView({
+      unique_id: checkRes.data.order.unique_id,
+      grand_total: Number(checkRes.data.order.grand_total),
+      placed_at: new Date(checkRes.data.order.placed_at),
+    })
+    setOrderDetail(orderView)
   }
 
   return (
@@ -214,12 +286,14 @@ export default function Home(): React.JSX.Element {
                                           Unable to load product information
                                         </p>
                                       </div>
-                                      <Button appendClassNames="w-full"
-                                        onClick={() => {
-                                          getProduct([productId])
-                                        }}>
-                                        Retry
-                                      </Button>
+                                      <div className="flex flex-col">
+                                        <Button appendClassNames="w-full"
+                                          onClick={() => {
+                                            getProduct([productId])
+                                          }}>
+                                          Retry
+                                        </Button>
+                                      </div>
                                     </>
                                 }
                               </div>
@@ -227,20 +301,32 @@ export default function Home(): React.JSX.Element {
                         }
                       </div>
                       <div className="col-span-12 sm:col-span-7">
-                        <OrderForm
-                          data={orderForm}
-                          onChange={(data) => {
-                            setOrderForm((prevState) => ({
-                              ...prevState,
-                              ...data,
-                            }))
-                          }}
-                          onSubmit={handleOrderSubmit}
-                          disabled={
-                            (productView && !productView.hasStock()) ||
-                            orderFormLoading
-                          }
-                        />
+                        {
+                          !orderDetail ?
+                            <OrderForm
+                              data={orderForm}
+                              onChange={(data) => {
+                                setOrderForm((prevState) => ({
+                                  ...prevState,
+                                  ...data,
+                                }))
+                              }}
+                              onSubmit={handleOrderSubmit}
+                              disabled={
+                                (productView && !productView.hasStock()) ||
+                                orderFormLoading
+                              }
+                            />
+                            :
+                            <div className="flex justify-end items-start">
+                              <OrderCard
+                                orderView={orderDetail}
+                                onReorderClick={() => {
+                                  setOrderDetail(undefined)
+                                }}
+                              />
+                            </div>
+                        }
                       </div>
                     </div>
                   </div>
