@@ -12,6 +12,11 @@ async function bootstrap() {
   const eventPort = process.env.EVENT_REDIS_PORT ?? 6379
 
   const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: '*',
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    },
     logger: new ConsoleLogger({
       json: env === 'production' || env === 'development',
       logLevels: ['log', 'warn', 'error', 'fatal'],

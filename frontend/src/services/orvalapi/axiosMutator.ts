@@ -5,7 +5,6 @@ const config = Config()
 
 export const AXIOS_INSTANCE = Axios.create({
   baseURL: config.getString("VITE_API_HOST"),
-  withCredentials: true,
   /**
    * @note
    * indexes: false  → scopes[]=organization&scopes[]=administration

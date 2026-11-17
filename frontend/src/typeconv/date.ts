@@ -16,3 +16,13 @@ export function dateFormatRelative(d: Date | number): string {
   }
   return dayjs(d).fromNow();
 }
+
+export function isSameDay(d1?: Date | number, d2?: Date | number): boolean {
+  if (!d1) {
+    return false
+  }
+  if (!d2) {
+    return false
+  }
+  return dayjs(d1).isSame(dayjs(d2), "day")
+}
