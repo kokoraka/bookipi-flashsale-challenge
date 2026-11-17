@@ -112,7 +112,7 @@ describe('OrderController', () => {
           promotion_id: request.promotion_id,
         });
 
-        expect(response.status).toHaveBeenCalledWith(HttpStatus.CREATED);
+        expect(response.status).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
 
         expect(result).toEqual({
           status: {

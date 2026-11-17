@@ -23,7 +23,7 @@ responses:
         examples:
           "Success":
             $ref: "./example_success.yml"
-  "201":
+  "202":
     description: success place order
     content:
       application/json:
