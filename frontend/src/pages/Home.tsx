@@ -9,12 +9,20 @@ import { Spinner } from "../components/Spinner"
 import { PromotionState, PromotionView } from "../features/Promotion"
 import { useGetFlashsalePromotionById, useGetFlashsaleProductById } from "../services/react"
 import { ProductView } from "../features/Product"
-import { ProductCard, PromotionAlert } from "../features/Flashsale";
+import { OrderForm, ProductCard, PromotionAlert } from "../features/Flashsale";
+
+const defaultOrderForm = {
+  email: "",
+  name: "",
+  quantity: "1",
+}
 
 export default function Home(): React.JSX.Element {
   const config = useConfig()
   const promotionId = config.getString('VITE_PROMOTION_ID')
   const productId = config.getString('VITE_PRODUCT_ID')
+
+  const [orderForm, setOrderForm] = React.useState(defaultOrderForm)
 
   const {
     data: promotionData,
@@ -144,7 +152,21 @@ export default function Home(): React.JSX.Element {
                         }
                       </div>
                       <div className="col-span-12 sm:col-span-7">
-                        TODO: add form
+                        <OrderForm
+
+                          data={orderForm}
+                          onChange={(data) => {
+                            setOrderForm((prevState) => ({
+                              ...prevState,
+                              ...data,
+                            }))
+                          }}
+                          onSubmit={(data) => {
+                            console.log(data)
+                            alert("TODO: SUBMIT")
+                          }}
+                          disabled={productView && !productView.hasStock()}
+                        />
                       </div>
                     </div>
                   </div>
