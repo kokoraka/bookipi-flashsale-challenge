@@ -1,4 +1,3 @@
-import { Button } from "../../components/Button"
 import { Card } from "../../components/Card"
 import { ProductView } from "../Product"
 
@@ -38,12 +37,6 @@ export function ProductCard(props: Readonly<ProductCardProps>): React.JSX.Elemen
         <span className="text-sm text-black">
           {productView.getFormatedStock()}
         </span>
-      </div>
-      <div className="mt-2">
-        <Button appendClassNames="w-full"
-          disabled={!productView.hasStock()}>
-          Buy Now
-        </Button>
       </div>
     </Card>
   )
