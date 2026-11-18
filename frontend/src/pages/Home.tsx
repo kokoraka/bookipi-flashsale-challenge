@@ -155,7 +155,8 @@ export default function Home(): React.JSX.Element {
         return
       }
 
-      toast.success(`Success place order`)
+      toast.info(`Processing order`)
+
       await viewOrder(placeRes.data?.order.unique_id)
     } catch (e: unknown) {
       const err = e as Error
@@ -222,6 +223,7 @@ export default function Home(): React.JSX.Element {
       placed_at: new Date(checkRes.data.order.placed_at),
     })
     setOrderDetail(orderView)
+    toast.success(`Success place order`)
   }
 
   return (
@@ -263,6 +265,11 @@ export default function Home(): React.JSX.Element {
                         {
                           productView ?
                             <ProductCard
+                              disabled={
+                                (productView && !productView.hasStock()) ||
+                                !promotionView.isOngoing() ||
+                                orderFormLoading
+                              }
                               productView={productView}
                             />
                             :
@@ -314,6 +321,7 @@ export default function Home(): React.JSX.Element {
                               onSubmit={handleOrderSubmit}
                               disabled={
                                 (productView && !productView.hasStock()) ||
+                                !promotionView.isOngoing() ||
                                 orderFormLoading
                               }
                             />

@@ -55,7 +55,7 @@ export function PromotionAlert(
       variant = AlertVariant.WARNING
     } else if (promotionView.isOngoing()) {
       variant = AlertVariant.SUCCESS
-    } else if (promotionView.isEnded()) {
+    } else if (promotionView.isEnded() || promotionView.isDisabled()) {
       variant = AlertVariant.DANGER
     }
 

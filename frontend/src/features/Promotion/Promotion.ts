@@ -45,6 +45,10 @@ export class PromotionView {
     return this.state == PromotionState.UPCOMING
   }
 
+  isDisabled(): boolean {
+    return this.state == PromotionState.DISABLED
+  }
+
   isEnded(): boolean {
     return this.state == PromotionState.ENDED
   }
@@ -58,7 +62,12 @@ export class PromotionView {
   }
 
   getStateMessage(): string {
-    if (isSameDay(this.start_at, this.end_at)) {
+    if (this.isDisabled()) {
+      return 'Promotion disabled'
+    }
+
+    const currentTs = new Date()
+    if (isSameDay(this.start_at, this.end_at) && isSameDay(currentTs, this.start_at)) {
       return dateFormat(this.start_at, "h:mm:ss") + " - " + dateFormat(this.end_at, "h:mm:ss")
     }
     return dateFormat(this.start_at, "YYYY-MM-DD h:mm:ss") + " - " + dateFormat(this.end_at, "YYYY-MM-DD h:mm:ss")
