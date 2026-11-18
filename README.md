@@ -66,6 +66,3 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 - REST = client transport layer with server
 - OpenAPI = generate client, server and documentation
 - Grafana k6 = Performance testing tools
-
-clean up 
-explain

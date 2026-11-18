@@ -135,6 +135,7 @@ services:
       - commerce-api
     networks:
       - mysql-net
+      - app-network
   cache:
     image: redis:8.8.0
     container_name: cache
@@ -170,3 +171,5 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
+  app-network:
+    external: true

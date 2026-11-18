@@ -15,22 +15,20 @@ install:
 # 	choco install k6
 	go install go.k6.io/xk6/cmd/xk6@latest
 	xk6 build --with github.com/grafana/xk6-faker
+	npm install
 
-.PHONY: start-dev
-start-dev: 
-	npm run start:dev
+.PHONY: start
+start: 
+	npm run start
 
-.PHONY: test-watch
-test-watch: 
-	npm run test:watch
+.PHONY: test-performance
+test-performance: 
+	k6 run --scenario spike test/product.performance-spec.ts
+	k6 run --scenario spike test/order.performance-spec.ts
 
 .PHONY: test-coverage
 test-coverage: 
 	npm run test:cov
-
-.PHONY: test-performance
-test-performance: 
-	k6 run --scenario spike test/order.performance-spec.ts
 
 .PHONY: test-analyze
 test-analyze:
@@ -41,6 +39,24 @@ test-analyze:
 analyze-sonar:
 	npm run analyze:sonar
 
+.PHONY: infra-install
+infra-install:
+	npm run build
+	docker compose -f ./development/docker-compose.yml up -d --build --scale commerce-api=3
+	./development/mysql/replication.sh
+
+.PHONY: infra-start
+infra-start:
+	docker compose -f ./development/docker-compose.yml up -d --scale commerce-api=3
+
+.PHONY: infra-stop
+infra-stop:
+	docker compose -f ./development/docker-compose.yml down
+
+.PHONY: infra-restart
+infra-restart:
+	docker compose -f ./development/docker-compose.yml restart
+
 .PHONY: monitor-process-window-background
 monitor-process-window-background: 
 # window script
@@ -50,21 +66,3 @@ monitor-process-window-background:
 monitor-connection-window: 
 # window script
 	@powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ./scripts/monitor-connection.ps1'"
-
-.PHONY: infra-install
-infra-install:
-	make infra-start
-	./development/mysql/replication.sh
-
-.PHONY: infra-start
-infra-start:
-	npm run build
-	docker compose up -d --build --scale commerce-api=3
-
-.PHONY: infra-stop
-infra-stop:
-	docker compose down
-
-.PHONY: infra-restart
-infra-restart:
-	docker compose restart
