@@ -6,6 +6,7 @@ import {
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
+import { ThrottlerException } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Status } from './entities/status/Status.js';
 import { StatusCode } from './entities/status/StatusCode.js';
@@ -35,6 +36,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof NotFoundException) {
       statusCode = StatusCode.RESOURCE_NOT_FOUND;
+    } else if (exception instanceof ThrottlerException) {
+      statusCode = StatusCode.SYSTEM_UNAVAILABLE;
     }
     return new Status(statusCode, statusMessage);
   }

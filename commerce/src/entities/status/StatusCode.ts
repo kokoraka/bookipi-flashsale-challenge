@@ -21,6 +21,8 @@ export enum StatusCode {
     SYSTEM_INTERNAL_ERROR = "SYSTEM.INTERNAL_ERROR",
     // system producing unknown error
     SYSTEM_UNKNOWN_ERROR = "SYSTEM.UNKNOWN_ERROR",
+        // system producing unknown error
+    SYSTEM_UNAVAILABLE = "SYSTEM.UNAVAILABLE",
     // unable to parse inputted data
     VALIDATION_INVALID_INPUT = "VALIDATION.INVALID_INPUT",
     // request is present but there's invalid data being sent by client
@@ -41,6 +43,7 @@ export const StatusMessages: Record<StatusCode, string> = {
     [StatusCode.SYSTEM_COMMUNICATION_TIMEOUT]: "timeout exceeded",
     [StatusCode.SYSTEM_INTERNAL_ERROR]: "Internal server error",
     [StatusCode.SYSTEM_UNKNOWN_ERROR]: "Internal server error",
+    [StatusCode.SYSTEM_UNAVAILABLE]: "System unavailable",
     [StatusCode.VALIDATION_INVALID_INPUT]: "Invalid input data",
     [StatusCode.VALIDATION_INVALID_PARAM]: "One or more fields are invalid",
     [StatusCode.VALIDATION_INVALID_STATE]: "One or more fields are on invalid state",
