@@ -2,7 +2,6 @@
 
 ## Todos
 
-1. rename `REPOSITORY_CACHE_HOST` into `REPOSITORY_CACHE_REDIS_HOST`
 2. add request logging (json) on rest and event handlers to ease debugging
 3. add rate limiter based on max rps that the system can handle based on testing result
 4. seeder & reset script 

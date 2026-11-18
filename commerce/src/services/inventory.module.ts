@@ -16,8 +16,8 @@ import { InventoryService, SERVICE_INVENTORY_TOKEN } from './inventory.service.j
       provide: CLIENT_REDIS_TOKEN,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const host = configService.get<string>('REPOSITORY_CACHE_HOST');
-        const port = configService.get<number>('REPOSITORY_CACHE_PORT');
+        const host = configService.get<string>('REPOSITORY_CACHE_REDIS_HOST');
+        const port = configService.get<number>('REPOSITORY_CACHE_REDIS_PORT');
 
         const client = createClient({
           url: `redis://${host}:${port}`,
