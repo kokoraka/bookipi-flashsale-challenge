@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest'
-import { ProductView } from './Product'
+import { ProductView } from './ProductView'
 
 describe('ProductView', () => {
   const defaultParams = {

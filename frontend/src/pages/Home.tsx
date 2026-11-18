@@ -7,9 +7,11 @@ import { Card } from "../components/Card"
 import { useConfig } from "../components/Config"
 import { Meta } from "../components/Meta"
 import { Spinner } from "../components/Spinner"
-import { PromotionState, PromotionView } from "../features/Promotion"
-import { ProductView } from "../features/Product"
-import { OrderForm, OrderFormData, ProductCard, PromotionAlert } from "../features/Flashsale";
+import {
+  PromotionAlert, PromotionState, PromotionView,
+  OrderCard, OrderForm, OrderFormData, OrderView,
+  ProductCard, ProductView,
+} from "../features/Flashsale";
 import { useToast } from "../components/Toast";
 import { Status, StatusCode } from "../status";
 import { generateIds } from "../services/text/idgen";
@@ -18,8 +20,6 @@ import {
   usePlaceOrder, useGetOrderById
 } from "../services/react"
 import { GetOrderByIdData } from "../services/orvalapi";
-import { OrderCard } from "../features/Flashsale/OrderCard";
-import { OrderView } from "../features/Order/Order";
 
 const defaultOrderForm = {
   email: "",

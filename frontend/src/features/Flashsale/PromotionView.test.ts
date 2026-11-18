@@ -5,7 +5,7 @@ import {
   PROMOTION_LABEL,
   PromotionState,
   PromotionView,
-} from './Promotion'
+} from './PromotionView'
 
 vi.mock('../../services/date/date', () => ({
   dateFormat: vi.fn(),
