@@ -1,6 +1,8 @@
 import { join } from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController as RestAppController } from './app.restcontroller.js';
 import { FlashSaleModule } from '../flashsale/flashsale.module.js'
@@ -56,10 +58,24 @@ import { EventModule } from '../../services/event/event.module.js';
       inject: [ConfigService],
     }),
     EventModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60_000,
+          limit: 10_000 * 60,
+        },
+      ],
+    }),
     FlashSaleModule,
     OrderModule
   ],
   controllers: [RestAppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    AppService,
+  ],
 })
 export class AppModule { }
