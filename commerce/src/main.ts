@@ -4,6 +4,7 @@ import { MicroserviceOptions } from '@nestjs/microservices';
 import { RedisStreamServer } from '@nestjs-redis/streams-transporter';
 import { AppModule } from './modules/app/app.module.js';
 import { HttpExceptionFilter } from './exception-filter.js';
+import { SERVICE_STARTUP_TOKEN, StartupService } from './services/startup.service.js';
 
 async function bootstrap() {
   const port = process.env.PORT ?? 4001
@@ -28,6 +29,10 @@ async function bootstrap() {
       url: `redis://${eventHost}:${eventPort}`,
     }),
   })
+
+  const startupService = app.get<StartupService>(SERVICE_STARTUP_TOKEN)
+  await startupService.refresh()
+
   await app.startAllMicroservices();
   await app.listen(port);
 }

@@ -12,6 +12,7 @@ import { CacheModule } from '../../repositories/cache.module.js';
 import { OrderModule } from '../order/order.module.js'
 import { AppService } from '../../services/app.service.js';
 import { EventModule } from '../../services/event/event.module.js';
+import { StartupModule } from '../../services/startup.module.js';
 
 @Module({
   imports: [
@@ -82,7 +83,8 @@ import { EventModule } from '../../services/event/event.module.js';
       }),
     }),
     FlashSaleModule,
-    OrderModule
+    OrderModule,
+    StartupModule,
   ],
   controllers: [RestAppController],
   providers: [
@@ -92,5 +94,6 @@ import { EventModule } from '../../services/event/event.module.js';
     },
     AppService,
   ],
+  exports: []
 })
 export class AppModule { }
