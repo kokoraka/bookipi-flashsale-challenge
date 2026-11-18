@@ -152,6 +152,7 @@ Complete user interfaces: [User Interface](./UI.md)
 | L4 Load Balancer (HAProxy) | • Proxies database connections, making them easier to manage <br> • Distributes incoming traffic using the least-connections algorithm, so traffic goes to the instance with the lowest load <br> • HAProxy supports both L4 and L7; for the database it operates at L4 (TCP) |
 | Database (MySQL) <br> Single Primary, Multiple Replicas | • Queuing already reduces write load, so multiple primaries are unnecessary <br> • Avoids replication lag from multi-primary writes <br> • Multiple replicas provide fault tolerance if the cache goes down |
 | Cache Store (Redis) | • Reduces read API load: p95 dropped from `2.2s` to `2.01ms` and rps increased from `1470.99` to `6366.51` <br> • Redis is used because multiple instances of the service run concurrently <br> • Intended to run in Sentinel mode for fault tolerance if an instance goes down (not yet implemented) |
+| Frontend | • data validation on client to reduce API load <br>• server side data management with react-query to easy manage server state • disable buy button after submitting order to reduce double order on client side <br>• delay getting placed order info for 3s, backoff 3 times |
 
 ### Technology Decisions
 
