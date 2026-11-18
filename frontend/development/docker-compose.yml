@@ -24,6 +24,10 @@ services:
       - frontend-app
     networks:
       - frontend-net
+      - app-network
 networks:
   frontend-net:
     driver: bridge
+  app-network:
+    external: true
+
