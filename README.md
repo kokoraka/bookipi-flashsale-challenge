@@ -1,20 +1,6 @@
 # Flash Sale
 
-Flash sales ordering platform submission for Bookipi job application by: Raka Suryaardi Widjaja
-
-## System Design
-
-### Architecture
-
-![Architecture](./docs/assets/architecture-1.png)
-
-### User Interface
-
-![User Interface](./docs/assets/user-interface-1.png)
-
-### Entity Relationship Diagram
-
-![Entity Relationship Diagram](./docs/assets/entity-relationship-diagram-1.png)
+Flash sales ordering platform submission.
 
 ## Requirements
 
@@ -58,6 +44,73 @@ Flash sales ordering platform submission for Bookipi job application by: Raka Su
 4. Multiple currency support and currency management
 - We'll assume all the currency represented in Australian Dollar (simplification purposes)
 - Currency data will be mocked instead of using real database table
+
+## System Design
+
+### Code Architecture
+
+1. Monorepo (commerce, frontend)
+2. Clean Architecture (port-adapter)
+
+### System Architecture
+
+![System Architecture](./docs/assets/architecture-final.png)
+
+### Entity Relationship Diagram
+
+![Entity Relationship Diagram](./docs/assets/entity-relationship-diagram-final.png)
+
+### Flow Diagram
+
+1. Get Promotion
+
+![Get Promotion](./docs/assets/flow-get-promotion.png)
+
+2. Get Product
+
+![Get Product](./docs/assets/flow-get-product.png)
+
+3. Place Order
+
+![Place Order](./docs/assets/flow-place-order.png)
+
+4. Process Order
+
+![Process Order](./docs/assets/flow-process-order.png)
+
+5. Get Order
+
+![Get Order](./docs/assets/flow-get-order.png)
+
+6. Stock Reconciliation
+
+![Stock Reconciliation](./docs/assets/flow-stock-reconciliation.png)
+
+## User Interfaces
+
+![Mock Up](./docs/assets/user-interface-final.png)
+
+![Promotion Disabled](./docs/assets/ui-promotion-disabled.png)
+
+![Promotion Upcoming](./docs/assets/ui-promotion-upcoming.png)
+
+![Promotion Ongoing](./docs/assets/ui-promotion-ongoing.png)
+
+![Promotion Ended](./docs/assets/ui-promotion-ended.png)
+
+![Stock in Stock](./docs/assets/ui-stock-in-stock.png)
+
+![Stock out Stock](./docs/assets/ui-stock-out-stock.png)
+
+![Stock Running out Stock](./docs/assets/ui-stock-running-out.png)
+
+![Order Placed](./docs/assets/ui-order-placed.png)
+
+![Order Insufficient](./docs/assets/ui-order-insufficient-stock.png)
+
+![Order 1 Item Rule](./docs/assets/ui-order-1-item-per-user.png)
+
+![Order Created](./docs/assets/ui-order-created.png)
 
 ## Technologies
 
