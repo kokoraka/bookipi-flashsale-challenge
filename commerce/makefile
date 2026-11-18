@@ -41,13 +41,13 @@ analyze-sonar:
 
 .PHONY: infra-install
 infra-install:
-	npm run build
-	docker compose -f ./development/docker-compose.yml up -d --build --scale commerce-api=3
+	docker compose -f ./development/docker-compose.yml up -d mysql-db-1 mysql-db-2 mysql-db-3 phpmyadmin proxy cache messaging
 	./development/mysql/replication.sh
 
 .PHONY: infra-start
 infra-start:
-	docker compose -f ./development/docker-compose.yml up -d --scale commerce-api=3
+	npm run build
+	docker compose -f ./development/docker-compose.yml up -d --build --scale commerce-api=3 commerce-api gateway
 
 .PHONY: infra-stop
 infra-stop:

@@ -11,6 +11,7 @@ import { RedisStreamClient } from '@nestjs-redis/streams-transporter';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         return new RedisStreamClient({
+          // @todo: resolve issue options not working
           url: `redis://${configService.get<string>('EVENT_REDIS_HOST')}:${configService.get<number>('EVENT_REDIS_PORT')}`,
           maxStreamLength: 1_000_000,
         });

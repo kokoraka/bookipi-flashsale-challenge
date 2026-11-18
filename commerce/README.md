@@ -2,13 +2,13 @@
 
 ## Todos
 
-4. seeder & reset script 
-5. get product stock from inventory cache instead of product available_quantity (or separate the api endpoint)
-6. handle reserve success, publish failed scenario
-7. handle database down code.message become empty string
-8. handle repo redis down cannot start app
-9. handle messaging redis down place order hangging indefinetly
-10. check idempotency-key on place-order
+0. seeder & reset script 
+1. check idempotency-key on place-order
+2. handle reserve success, publish failed scenario
+3. handle database down code.message become empty string
+4. handle repo redis down cannot start app
+5. handle messaging redis down place order hangging indefinetly
+6. get product stock from inventory cache instead of product available_quantity (or separate the api endpoint)
 
 ### Nice to Have
 

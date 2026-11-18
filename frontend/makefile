@@ -28,12 +28,12 @@ analyze-sonar:
 
 .PHONY: infra-install
 infra-install:
-	npm run build
-	docker compose -f ./development/docker-compose.yml up -d --build --scale frontend-app=3
+# 	no script
 
 .PHONY: infra-start
 infra-start:
-	docker compose -f ./development/docker-compose.yml up -d --scale frontend-app=3
+	npm run build
+	docker compose -f ./development/docker-compose.yml up -d --scale frontend-app=3 frontend-app frontend
 
 .PHONY: infra-stop
 infra-stop:
