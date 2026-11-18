@@ -1,7 +1,7 @@
 import { Alert, AlertVariant } from "../../components/Alert"
 import { Button } from "../../components/Button"
 import { Spinner } from "../../components/Spinner"
-import { PromotionView } from "../Promotion"
+import { PromotionView } from "./PromotionView"
 import { Info } from "../Page"
 
 type PromotionAlertProps = {

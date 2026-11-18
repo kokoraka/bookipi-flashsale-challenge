@@ -1,7 +1,7 @@
 import React from "react"
 import { Card } from "../../components/Card"
 import { Badge, BadgeVariant } from "../../components/Badge"
-import { ProductView } from "../Product"
+import { ProductView } from "./ProductView"
 
 type ProductCardProps = {
   disabled?: boolean
