@@ -4,44 +4,48 @@ Flash sales ordering platform submission.
 
 ## Summary
 
-Development is done by implementing and testing the system properly step-by-step with conditions such as:
+Development is done by implementing and testing the system properly step-by-step with limitations and assumptions such as:
 1. Limited time of development
-2. Unknown amount of users or traffics that we're going to handle (i assume > 1k+, and improved gradually)
+2. We're going to handle > 1k+ concurrent users and improve gradually
+3. Browse to Order ratio (Visit:Read:Write) = 1:5:1
 
-Based on [Performance Testing](./TESTING.md), system is capable to handle high amount of traffics with strict unique and no over-sell ordering rules:
+Based on [Performance Testing](./TESTING.md), system is capable to handle high amount of traffics with limited resource, strict unique and no over-sell ordering rules:
 1. Read API = `~6775.90 RPS` with p95 `~2.01ms`
 2. Write API = `~784.96 RPS` with p95 `554.49ms`
 
-Further testing necessary:
-1. API integration test (unimplemented)
-2. Frontend integration test (unimplemented)
-3. Chaos monkey (randomly shutting down) the infrastructure (untested)
+And by using this formulas:
+- V = Visit Ratio (e.g: 100)
+- T = Avg seconds between req/user (1 quick, 2-3 for slow polling)
+- S = Safety factor (1 peak, 0.8 normal)
+- CU = Concurent Users = (API RPS / Ratio Weight) x V x T x S
 
-Futher implementation necessary:
-1. Check idempotency on place order API (unimplemented)
-2. Check different libraries handling on outage (unchecked)
-3. Fetching product stock from inventory cache instead of product cache on get product API (unimplemented)
-4. Interactive timer on frontend app (unimplemented)
-5. Run the redis cache and messaging on sentinel mode (unimplemented)
-6. Stock reconciliation (unimplemented)
+So based on those data and formula, system can achieve:
+1. Read API = (`6775.9` / 5) x 1 x 2 x 1 = `~2,710` Concurent users
+2. Write API = (`784.96` / 1) x 1 x 2 x 1 = `~1,570` Concurent users
 
 ## Requirements
 
 ### Functional Requirements
 
-1. List on-sales products
+1. View Promotion 
+
+- View promotion time and status (invalid, disabled, opcoming, ongoing, ended)
+- Promotion configured manually through `.env`
+
+1. View Product
 
 - There's only 1 product (simplification purposes)
+- Product is seeded automatically, ID: `01a1dd34-b2fc-7fa1-b7e1-b98267225dfa` with `2K` quantity
 
-2. User identification mechanism
+2. Buyer Identification
 
-- Enter user identification, e.g: username or email (simplification purposes)
+- User is identified by `email address` submited by buyer
+- Name should be filled as well
 
-3. Create order
+3. Place order
 
-- Allow order creation within certain `start_time` and `end_time` period
-- There's only 1 product (simplification purposes)
-- 1 User is only allowed to purchase 1 quantity of on-sales product (simplification purposes)
+- Allow order creation within certain `Promotion` period and configuration
+- Can only purchase 1 product and 1 quantity (simplification purposes)
 
 4. View order
 
@@ -145,21 +149,22 @@ Complete user interfaces: [User Interface](./UI.md)
 | Item | Description |
 | :--- | :---------- |
 | Monorepo | A simple setup suited to a small project built by one person. |
-| Clean Architecture | • Easy to manage codes <br> • Easy to test through dependency injection <br> • Clear separation of concerns (data layer, business logic layer, etc.) |
+| Clean Architecture | • Easy to manage codes <br> • Easy to test through dependency injection <br> • Easy to replace dependency if needed (just implement the adapter) <br> • Clear separation of concerns (data layer, business logic layer, etc.) |
 | L7 Load Balancer (nginx) | • Acts as both web server and load balancer, distributing incoming traffic to the frontend and backend apps <br> • Uses the least-connections algorithm, so traffic goes to the instance with the lowest load <br> • Frontend and backend have separate load balancers, so each can run on different servers and be optimized for its own specification |
-| Fast Centralized Inventory (Redis) | • Reduces write API load: p95 dropped from `4.81s` to `2.2s`, and throughput rose from `250 rps` to `383.31 rps` <br> • Redis is required because multiple instances of the service are deployed and need a shared inventory |
-| Order Queuing (Redis Streams) | • Further reduces write API load: p95 dropped from `2.2s` to `427.43ms`, and throughput rose from `383.31 rps` to `697.92 rps` <br> • No distributed transaction or outbox is used between the inventory deduction and queue publishing. If publishing fails, stock will be inconsistent until it is corrected automatically by Stock Reconciliation (see the Stock Reconciliation flow) or manually as part of BAU <br> • Redis Streams is sufficient for testing purposes and provides durable messages that survive outages. A real production system should use proper messaging infrastructure such as RabbitMQ or Google Pub/Sub |
+| Fast Centralized Inventory (Redis) | • Reduces write API load from traditional row level locking that might cause timeout: p95 dropped from `4.81s` to `2.2s`, and throughput rose from `250 rps` to `383.31 rps` <br> • Redis is required because multiple instances of the service are deployed and need a shared inventory |
+| Order Queuing (Redis Streams) | • Further reduces write API load: p95 dropped from `2.2s` to `427.43ms`, and throughput rose from `383.31 rps` to `697.92 rps` <br> • No distributed transaction or outbox were used between the inventory deduction and queue publishing. If publishing fails, stock will be inconsistent until it is corrected automatically by Stock Reconciliation (see the Stock Reconciliation flow) or manually as part of BAU. The reason is because we may want to change the queuing infrastructure in the future so we can't really use outbox here. <br> • Redis Streams is sufficient for testing purposes and provides durable messages that survive outages. A real production system should use proper messaging infrastructure such as RabbitMQ, Google Pub/Sub, Kafka, etc |
 | L4 Load Balancer (HAProxy) | • Proxies database connections, making them easier to manage <br> • Distributes incoming traffic using the least-connections algorithm, so traffic goes to the instance with the lowest load <br> • HAProxy supports both L4 and L7; for the database it operates at L4 (TCP) |
-| Database (MySQL) <br> Single Primary, Multiple Replicas | • Queuing already reduces write load, so multiple primaries are unnecessary <br> • Avoids replication lag from multi-primary writes <br> • Multiple replicas provide fault tolerance if the cache goes down |
+| SQL Database (MySQL) <br> Single Primary, Multiple Replicas | • At first attempt of implementing this project i need to implement row level locking, so i needed database with proper locking mechanism<br>• Strong consistency and transactional guarantees <br>• Data structure is simple enough can be handled by SQL <br>• Queuing already reduces write load, so multiple primaries are unnecessary <br> • Avoids replication lag from multi-primary writes <br> • Multiple replicas provide fault tolerance if the cache goes down |
 | Cache Store (Redis) | • Reduces read API load: p95 dropped from `2.2s` to `2.01ms` and rps increased from `1470.99` to `6366.51` <br> • Redis is used because multiple instances of the service run concurrently <br> • Intended to run in Sentinel mode for fault tolerance if an instance goes down (not yet implemented) |
-| Frontend | • data validation on client to reduce API load <br>• server side data management with react-query to easy manage server state • disable buy button after submitting order to reduce double order on client side <br>• delay getting placed order info for 3s, backoff 3 times |
+| Frontend | • data validation on client to reduce API load <br>• server side data management with react-query to easy manage server state <br>• disable buy button after submitting order to reduce double order on client side <br>• delay getting placed order info for 3s, backoff 3 times |
+| Centralized Rate Limiting (Redis) | • Prevent resource exhaustion when request spike, configured with token bucket and testing result values to cap the average amount of request that can be handle by the system <br>• Redis is required because multiple instances of the service are deployed and need a shared count |
 
 ### Technology Decisions
 
 | Item | Description |
 | :--- | :---------- |
-| REST API | I initially planned to add an API gateway connecting to gRPC services as well, but there wasn't enough time to scaffold it, and it offered no additional benefit for this challenge. |
-| OpenAPI | Standardizes the API specification and generates both server and client code. It can also generate documentation, though that is out of scope here. |
+| REST API | Client need to interact with the server through HTTP mechanism. <br> I initially planned to add an API gateway connecting to gRPC services as well, but there wasn't enough time to scaffold it, and it offered no additional benefit for this challenge. |
+| OpenAPI | Standardizes the API specification and generates both server and client code. It can also generate documentation, but that is out of scope here. |
 | NestJS | Easy boilerplate, TypeScript support, a large library ecosystem, and good performance since it is built on top of Express. |
 | React | Required by the challenge, and an easy frontend library to work with. |
 | K6 | A stable, easy-to-use tool for stress testing. |
@@ -200,6 +205,23 @@ Please refer to [TESTING.md](./TESTING.md) for real stress test result of the se
 | /frontend    | make infra-start      | Start app inside infra                                     |
 | /frontend    | make infra-stop       | Stop app inside infra                                      |
 | /frontend    | make infra-restart    | Restart app inside infra                                   |
+
+## Improvements
+
+Further testing necessary:
+1. API integration test (unimplemented)
+2. Frontend integration test (unimplemented)
+3. Chaos monkey (randomly shutting down) the infrastructure (untested)
+
+Futher implementation necessary:
+1. Check idempotency on place order API (unimplemented)
+2. Check different libraries handling on outage (unchecked)
+3. Fetching product stock from inventory cache instead of product cache on get product API (unimplemented)
+4. Run the redis cache and messaging on sentinel mode (unimplemented)
+5. Stock reconciliation (unimplemented)
+6. Interactive timer on frontend app (unimplemented)
+7. Disable buy button if we know there's no quantity available on frontend (unimplemented)
+8. Code refactoring and shared library between backend and frontend codes
 
 ## Issues
 
@@ -264,5 +286,7 @@ And manually removing the trim for stress-testing purposes 😅
       return undefined;
   }
 ```
+
+If you found difficulty running this project, feel free to reach out to me 😉
 
 _Cheers!_
