@@ -16,8 +16,8 @@ install:
 
 .PHONY: start
 start:
-	$(MAKE) -C commerce infra-start
-	$(MAKE) -C frontend infra-start
+	$(MAKE) -C commerce start
+	$(MAKE) -C frontend start
 
 .PHONY: test
 test:
@@ -27,6 +27,11 @@ test:
 .PHONY: test-performance
 test-performance:
 	$(MAKE) -C commerce test-performance
+
+.PHONY: infra-start
+infra-start:
+	$(MAKE) -C commerce infra-start
+	$(MAKE) -C frontend infra-start
 
 # do nothing target
 %:
