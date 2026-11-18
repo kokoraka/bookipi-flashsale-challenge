@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HttpExceptionFilter } from './exception-filter.js';
 import { Status } from './entities/status/Status.js';
 import { StatusCode } from './entities/status/StatusCode.js';
+import { ThrottlerException } from '@nestjs/throttler';
 
 describe('HttpExceptionFilter', () => {
   let filter: HttpExceptionFilter;
@@ -66,6 +67,23 @@ describe('HttpExceptionFilter', () => {
         status: new Status(
           StatusCode.RESOURCE_NOT_FOUND,
           'Resource not found',
+        ),
+      });
+    });
+
+    it('returns resource not found status when catching ThrottlerException', () => {
+      const exception = new ThrottlerException('Throttle');
+      const { host, response } = createArgumentsHost();
+
+      filter.catch(exception, host);
+
+      expect(response.status).toHaveBeenCalledWith(
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+      expect(response.json).toHaveBeenCalledWith({
+        status: new Status(
+          StatusCode.SYSTEM_UNAVAILABLE,
+          'Throttle',
         ),
       });
     });

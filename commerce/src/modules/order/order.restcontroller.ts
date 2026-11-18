@@ -1,5 +1,7 @@
 import { Controller, HttpStatus, Post, Body, Headers, Res, Get, Param, Inject } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { THROTTLE_READ, THROTTLE_WRITE } from '../app/throttle.config.js';
 import { StatusCode } from '../../entities/status/StatusCode.js';
 import { FEATURE_ORDER } from './order.feature.js';
 import type { OrderFeatureInterface } from './order.feature.js';
@@ -14,6 +16,9 @@ export class OrderController {
     private readonly orderFeature: OrderFeatureInterface,
   ) { }
 
+  @Throttle({
+    default: THROTTLE_WRITE
+  })
   @Post('/v1/orders')
   async placeOrder(
     @Res({ passthrough: true }) res: Response,
@@ -63,6 +68,9 @@ export class OrderController {
     }
   }
 
+  @Throttle({
+    default: THROTTLE_READ
+  })
   @Get('/v1/orders/:id')
   async getOrder(
     @Param('id') id: string,

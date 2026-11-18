@@ -1,5 +1,7 @@
 import { Controller, HttpStatus, Get, Param, Res } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { THROTTLE_READ } from '../app/throttle.config.js';
 import { StatusCode } from './../../entities/status/StatusCode.js';
 import { FlashSaleFeature } from './flashsale.feature.js';
 import { GetFlashsaleProductByIdResponse } from '../../restgen/models/GetFlashsaleProductByIdResponse.js'
@@ -9,6 +11,9 @@ import { GetFlashsalePromotionByIdResponse } from '../../restgen/index.js';
 export class FlashSaleController {
   constructor(private readonly flashSaleFeature: FlashSaleFeature) { }
 
+  @Throttle({
+    default: THROTTLE_READ
+  })
   @Get('/v1/flashsale/products/:id')
   async getProduct(
     @Param('id') id: string,
@@ -54,6 +59,9 @@ export class FlashSaleController {
     }
   }
 
+  @Throttle({
+    default: THROTTLE_READ
+  })
   @Get('/v1/flashsale/promotions/:id')
   async getPromotion(
     @Param('id') id: string,

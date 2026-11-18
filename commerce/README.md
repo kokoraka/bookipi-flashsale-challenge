@@ -2,9 +2,6 @@
 
 ## Todos
 
-1. rename `REPOSITORY_CACHE_HOST` into `REPOSITORY_CACHE_REDIS_HOST`
-2. add request logging (json) on rest and event handlers to ease debugging
-3. add rate limiter based on max rps that the system can handle based on testing result
 4. seeder & reset script 
 5. get product stock from inventory cache instead of product available_quantity (or separate the api endpoint)
 6. handle reserve success, publish failed scenario
@@ -17,7 +14,7 @@
 
 1. move performance test into separate project folder
 2. refactor function result type so no need data checking
-
+3. add request logging (json) on rest and event handlers to ease debugging
 
 ## Issues
 

@@ -12,8 +12,8 @@ import { KeyvCacheableMemory } from 'cacheable';
     ManagerCacheModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const host = configService.get('REPOSITORY_CACHE_HOST');
-        const port = configService.get<number>('REPOSITORY_CACHE_PORT');
+        const host = configService.get('REPOSITORY_CACHE_REDIS_HOST');
+        const port = configService.get<number>('REPOSITORY_CACHE_REDIS_PORT');
         const redisStore = createKeyv(`redis://${host}:${port}`);
         redisStore.on('error', (err) => console.error('Redis error:', err));
 
