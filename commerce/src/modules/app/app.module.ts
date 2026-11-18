@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { RedisModule, RedisToken } from '@nestjs-redis/client';
+import { RedisThrottlerStorage, ThrottlerAlgorithm } from '@nestjs-redis/throttler-storage';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController as RestAppController } from './app.restcontroller.js';
 import { FlashSaleModule } from '../flashsale/flashsale.module.js'
@@ -58,13 +60,26 @@ import { EventModule } from '../../services/event/event.module.js';
       inject: [ConfigService],
     }),
     EventModule,
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
+    ThrottlerModule.forRootAsync({
+      imports: [
+        RedisModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: async (configService: ConfigService) => ({
+            options: {
+              url: `redis://${configService.get('RATE_LIMITER_REDIS_HOST')}:${configService.get('RATE_LIMITER_REDIS_PORT')}`,
+            }
+          }),
+          inject: [ConfigService],
+        })
+      ],
+      inject: [RedisToken()],
+      useFactory: (redis) => ({
+        throttlers: [{
           ttl: 60_000,
           limit: 10_000 * 60,
-        },
-      ],
+        }],
+        storage: new RedisThrottlerStorage(redis, ThrottlerAlgorithm.TokenBucket),
+      }),
     }),
     FlashSaleModule,
     OrderModule
