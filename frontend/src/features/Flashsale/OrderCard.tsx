@@ -1,6 +1,6 @@
 import { Button } from "../../components/Button"
 import { Card } from "../../components/Card"
-import { OrderView } from "../Order/Order"
+import { OrderView } from "./OrderView"
 
 type OrderCardProps = {
   orderView: OrderView

@@ -1,12 +1,16 @@
+import React from "react"
 import { Card } from "../../components/Card"
+import { Badge, BadgeVariant } from "../../components/Badge"
 import { ProductView } from "../Product"
 
 type ProductCardProps = {
+  disabled?: boolean
   productView: ProductView
 }
 
 export function ProductCard(props: Readonly<ProductCardProps>): React.JSX.Element {
   const {
+    disabled = false,
     productView,
   } = props
 
@@ -34,10 +38,19 @@ export function ProductCard(props: Readonly<ProductCardProps>): React.JSX.Elemen
         <span className="text-sm text-black">
           {productView.getFormatedPrice()}
         </span>
-        <span className="text-sm text-black">
+        <Badge variant={disabled ? BadgeVariant.DISABLED : getStockBadgeVariant(productView)}>
           {productView.getFormatedStock()}
-        </span>
+        </Badge>
       </div>
     </Card>
   )
+}
+
+function getStockBadgeVariant(productView: ProductView): BadgeVariant {
+  if (!productView.hasStock()) {
+    return BadgeVariant.DANGER
+  } else if (productView.isRunningOut()) {
+    return BadgeVariant.WARNING
+  }
+  return BadgeVariant.SUCCESS
 }

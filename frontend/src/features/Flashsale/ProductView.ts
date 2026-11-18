@@ -50,10 +50,14 @@ export class ProductView {
     return this.available_quantity > 0
   }
 
+  isRunningOut(): boolean {
+    return this.available_quantity > 0 && this.available_quantity < 10
+  }
+
   getFormatedStock(): string {
-    if (this.available_quantity === 0) {
+    if (!this.hasStock()) {
       return 'Out of Stock'
-    } else if (this.available_quantity < 10) {
+    } else if (this.isRunningOut()) {
       return 'Running out'
     }
     return 'In Stock'

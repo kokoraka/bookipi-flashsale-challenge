@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { OrderView } from './Order'
+import { OrderView } from './OrderView'
 import { dateFormat } from '../../services/date'
 
 vi.mock('../../services/date', () => ({

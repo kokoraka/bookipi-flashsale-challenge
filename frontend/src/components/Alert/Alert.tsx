@@ -3,8 +3,8 @@ import { HiXMark } from "react-icons/hi2"
 import {
   AlertVariant,
   AlertVariantProps,
-  AlertStyle
 } from "./Resource"
+import { cva } from "class-variance-authority"
 
 type AlertProps = {
   children?: {
@@ -16,8 +16,6 @@ type AlertProps = {
   closeAble?: boolean
   onClose?: () => void
 }
-
-const styleBuilder = new AlertStyle()
 
 export function Alert(props: Readonly<AlertProps>): React.JSX.Element {
   const {
@@ -36,20 +34,16 @@ export function Alert(props: Readonly<AlertProps>): React.JSX.Element {
     onClose?.()
   }
 
-  const styler = styleBuilder.setVariant(variant)
-  const containerClass = styler.buildContainer()
-  const itemClass = styler.buildTitle()
-
   return (
     <>
       {
         opened &&
-        <div className={containerClass}>
+        <div className={container({ variant })}>
           <div className="flex justify-start items-center w-full">
             <div>
               {
                 children?.header &&
-                <div className={itemClass}>
+                <div className={title({ variant })}>
                   {children.header}
                 </div>
               }
@@ -73,3 +67,39 @@ export function Alert(props: Readonly<AlertProps>): React.JSX.Element {
     </>
   )
 }
+
+const container = cva(
+  "flex flex-row p-5 my-2 rounded border shadow-sm",
+  {
+    variants: {
+      variant: {
+        info: "bg-blue-200 border-blue-300",
+        success: "bg-green-200 border-green-300",
+        warning: "bg-orange-200 border-orange-300",
+        danger: "bg-red-200 border-red-300",
+        disabled: "bg-gray-200 border-gray-300",
+      },
+    },
+    defaultVariants: {
+      variant: "info",
+    },
+  }
+)
+
+const title = cva(
+  "font-semibold text-md",
+  {
+    variants: {
+      variant: {
+        info: "text-blue-800",
+        success: "text-green-800",
+        warning: "text-orange-800",
+        danger: "text-red-800",
+        disabled: "text-gray-800",
+      },
+    },
+    defaultVariants: {
+      variant: "info",
+    },
+  }
+)

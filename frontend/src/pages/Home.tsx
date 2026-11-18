@@ -7,9 +7,11 @@ import { Card } from "../components/Card"
 import { useConfig } from "../components/Config"
 import { Meta } from "../components/Meta"
 import { Spinner } from "../components/Spinner"
-import { PromotionState, PromotionView } from "../features/Promotion"
-import { ProductView } from "../features/Product"
-import { OrderForm, OrderFormData, ProductCard, PromotionAlert } from "../features/Flashsale";
+import {
+  PromotionAlert, PromotionState, PromotionView,
+  OrderCard, OrderForm, OrderFormData, OrderView,
+  ProductCard, ProductView,
+} from "../features/Flashsale";
 import { useToast } from "../components/Toast";
 import { Status, StatusCode } from "../status";
 import { generateIds } from "../services/text/idgen";
@@ -18,8 +20,6 @@ import {
   usePlaceOrder, useGetOrderById
 } from "../services/react"
 import { GetOrderByIdData } from "../services/orvalapi";
-import { OrderCard } from "../features/Flashsale/OrderCard";
-import { OrderView } from "../features/Order/Order";
 
 const defaultOrderForm = {
   email: "",
@@ -155,7 +155,8 @@ export default function Home(): React.JSX.Element {
         return
       }
 
-      toast.success(`Success place order`)
+      toast.info(`Processing order`)
+
       await viewOrder(placeRes.data?.order.unique_id)
     } catch (e: unknown) {
       const err = e as Error
@@ -222,6 +223,7 @@ export default function Home(): React.JSX.Element {
       placed_at: new Date(checkRes.data.order.placed_at),
     })
     setOrderDetail(orderView)
+    toast.success(`Success place order`)
   }
 
   return (
@@ -263,6 +265,11 @@ export default function Home(): React.JSX.Element {
                         {
                           productView ?
                             <ProductCard
+                              disabled={
+                                (productView && !productView.hasStock()) ||
+                                !promotionView.isOngoing() ||
+                                orderFormLoading
+                              }
                               productView={productView}
                             />
                             :
@@ -314,6 +321,7 @@ export default function Home(): React.JSX.Element {
                               onSubmit={handleOrderSubmit}
                               disabled={
                                 (productView && !productView.hasStock()) ||
+                                !promotionView.isOngoing() ||
                                 orderFormLoading
                               }
                             />
